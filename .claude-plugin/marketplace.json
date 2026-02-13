@@ -1,0 +1,14 @@
+{
+  "name": "onethousand-doc-plugins",
+  "version": "1.0.0",
+  "description": "One Thousand GmbH document generation plugins for Claude Cowork",
+  "owner": { "name": "One Thousand GmbH" },
+  "plugins": [
+    {
+      "name": "docs-generator",
+      "version": "1.1.0",
+      "source": { "source": "github", "repo": "BhaveshOneT/docs-generator-plugin" },
+      "description": "Scope document generator with One Thousand branding, Graphviz architecture diagrams, confidence scoring, and anti-hallucination verification. EN/DE support."
+    }
+  ]
+}
