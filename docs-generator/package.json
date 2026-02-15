@@ -1,0 +1,27 @@
+{
+  "name": "docs-generator",
+  "version": "1.1.0",
+  "description": "Claude Code plugin for professional document generation with One Thousand branding. Scope documents, architecture diagrams (Graphviz), confidence-scored content, and anti-hallucination verification. EN/DE support.",
+  "type": "module",
+  "keywords": [
+    "claude-code",
+    "plugin",
+    "scope-document",
+    "scope-doc",
+    "project-scope",
+    "document-generation",
+    "docx-export",
+    "branded-documents",
+    "multi-language",
+    "architecture-diagram",
+    "anti-hallucination",
+    "confidence-scoring",
+    "client-deliverable"
+  ],
+  "author": "One Thousand GmbH",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

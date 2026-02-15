@@ -1,0 +1,645 @@
+<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex" xmlns:cx1="http://schemas.microsoft.com/office/drawing/2015/9/8/chartex" xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex" xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex" xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex" xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex" xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex" xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex" xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink" xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:oel="http://schemas.microsoft.com/office/2019/extlst" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex" xmlns:w16cid="http://schemas.microsoft.com/office/word/2016/wordml/cid" xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml" xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du" xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash" xmlns:w16sdtfl="http://schemas.microsoft.com/office/word/2024/wordml/sdtformatlock" xmlns:w16se="http://schemas.microsoft.com/office/word/2015/wordml/symex" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14 w15 w16se w16cid w16 w16cex w16sdtdh w16sdtfl w16du wp14">
+  <w:body>
+    <w:bookmarkStart w:id="0" w:name="OLE_LINK1"/>
+    <w:p w14:paraId="1AAB421B" w14:textId="395AB114" w:rsidR="006A41B1" w:rsidRPr="00CC1B8F" w:rsidRDefault="00754218" w:rsidP="7A93A503">
+      <w:pPr>
+        <w:spacing w:after="180" w:line="240" w:lineRule="auto"/>
+        <w:rPr>
+          <w:sz w:val="20"/>
+          <w:szCs w:val="20"/>
+          <w:lang w:val="en-US"/>
+        </w:rPr>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:eastAsia="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
+          <w:b/>
+          <w:bCs/>
+          <w:noProof/>
+          <w:sz w:val="32"/>
+          <w:szCs w:val="40"/>
+          <w:lang w:eastAsia="de-DE"/>
+        </w:rPr>
+        <mc:AlternateContent>
+          <mc:Choice Requires="wps">
+            <w:drawing>
+              <wp:anchor distT="0" distB="0" distL="114300" distR="114300" simplePos="0" relativeHeight="251658240" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1" wp14:anchorId="4DBD185F" wp14:editId="3089711D">
+                <wp:simplePos x="0" y="0"/>
+                <wp:positionH relativeFrom="column">
+                  <wp:posOffset>-1096010</wp:posOffset>
+                </wp:positionH>
+                <wp:positionV relativeFrom="paragraph">
+                  <wp:posOffset>-4403607</wp:posOffset>
+                </wp:positionV>
+                <wp:extent cx="10011063" cy="11049000"/>
+                <wp:effectExtent l="50800" t="25400" r="60325" b="76200"/>
+                <wp:wrapNone/>
+                <wp:docPr id="78501727" name="Rechteck 4"/>
+                <wp:cNvGraphicFramePr/>
+                <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+                  <a:graphicData uri="http://schemas.microsoft.com/office/word/2010/wordprocessingShape">
+                    <wps:wsp>
+                      <wps:cNvSpPr/>
+                      <wps:spPr>
+                        <a:xfrm>
+                          <a:off x="0" y="0"/>
+                          <a:ext cx="10011063" cy="11049000"/>
+                        </a:xfrm>
+                        <a:prstGeom prst="rect">
+                          <a:avLst/>
+                        </a:prstGeom>
+                        <a:solidFill>
+                          <a:srgbClr val="18A05A"/>
+                        </a:solidFill>
+                      </wps:spPr>
+                      <wps:style>
+                        <a:lnRef idx="1">
+                          <a:schemeClr val="accent1"/>
+                        </a:lnRef>
+                        <a:fillRef idx="3">
+                          <a:schemeClr val="accent1"/>
+                        </a:fillRef>
+                        <a:effectRef idx="2">
+                          <a:schemeClr val="accent1"/>
+                        </a:effectRef>
+                        <a:fontRef idx="minor">
+                          <a:schemeClr val="lt1"/>
+                        </a:fontRef>
+                      </wps:style>
+                      <wps:bodyPr rot="0" spcFirstLastPara="0" vertOverflow="overflow" horzOverflow="overflow" vert="horz" wrap="square" lIns="91440" tIns="45720" rIns="91440" bIns="45720" numCol="1" spcCol="0" rtlCol="0" fromWordArt="0" anchor="ctr" anchorCtr="0" forceAA="0" compatLnSpc="1">
+                        <a:prstTxWarp prst="textNoShape">
+                          <a:avLst/>
+                        </a:prstTxWarp>
+                        <a:noAutofit/>
+                      </wps:bodyPr>
+                    </wps:wsp>
+                  </a:graphicData>
+                </a:graphic>
+                <wp14:sizeRelH relativeFrom="margin">
+                  <wp14:pctWidth>0</wp14:pctWidth>
+                </wp14:sizeRelH>
+                <wp14:sizeRelV relativeFrom="margin">
+                  <wp14:pctHeight>0</wp14:pctHeight>
+                </wp14:sizeRelV>
+              </wp:anchor>
+            </w:drawing>
+          </mc:Choice>
+          <mc:Fallback xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" xmlns:arto="http://schemas.microsoft.com/office/word/2006/arto">
+            <w:pict w14:anchorId="34C8E1A3">
+              <v:rect id="Rechteck 4" style="position:absolute;margin-left:-86.3pt;margin-top:-346.75pt;width:788.25pt;height:870pt;z-index:251658240;visibility:visible;mso-wrap-style:square;mso-width-percent:0;mso-height-percent:0;mso-wrap-distance-left:9pt;mso-wrap-distance-top:0;mso-wrap-distance-right:9pt;mso-wrap-distance-bottom:0;mso-position-horizontal:absolute;mso-position-horizontal-relative:text;mso-position-vertical:absolute;mso-position-vertical-relative:text;mso-width-percent:0;mso-height-percent:0;mso-width-relative:margin;mso-height-relative:margin;v-text-anchor:middle" o:spid="_x0000_s1026" fillcolor="#18a05a" strokecolor="#7794b0 [3044]" w14:anchorId="1174E3F7" o:gfxdata="UEsDBBQABgAIAAAAIQC2gziS/gAAAOEBAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbJSRQU7DMBBF90jcwfIWJU67QAgl6YK0S0CoHGBkTxKLZGx5TGhvj5O2G0SRWNoz/78nu9wcxkFMGNg6quQqL6RA0s5Y6ir5vt9lD1JwBDIwOMJKHpHlpr69KfdHjyxSmriSfYz+USnWPY7AufNIadK6MEJMx9ApD/oD OlTrorhX2lFEilmcO2RdNtjC5xDF9pCuTyYBB5bi6bQ4syoJ3g9WQ0ymaiLzg5KdCXlKLjvcW893 SUOqXwnz5DrgnHtJTxOsQfEKIT7DmDSUCaxw7Rqn8787ZsmRM9e2VmPeBN4uqYvTtW7jvijg9N/y JsXecLq0q+WD6m8AAAD//wMAUEsDBBQABgAIAAAAIQA4/SH/1gAAAJQBAAALAAAAX3JlbHMvLnJl bHOkkMFqwzAMhu+DvYPRfXGawxijTi+j0GvpHsDYimMaW0Yy2fr2M4PBMnrbUb/Q94l/f/hMi1qR JVI2sOt6UJgd+ZiDgffL8ekFlFSbvV0oo4EbChzGx4f9GRdb25HMsYhqlCwG5lrLq9biZkxWOiqY 22YiTra2kYMu1l1tQD30/bPm3wwYN0x18gb45AdQl1tp5j/sFB2T0FQ7R0nTNEV3j6o9feQzro1i OWA14Fm+Q8a1a8+Bvu/d/dMb2JY5uiPbhG/ktn4cqGU/er3pcvwCAAD//wMAUEsDBBQABgAIAAAA IQA1jDaiWwIAACcFAAAOAAAAZHJzL2Uyb0RvYy54bWysVN9P2zAQfp+0/8Hy+0hSCoOKFFUgpkkI 0GDi2XXs1pLj885u0+6v39lN04ohIU17ce5yvz9/56vrTWvZWmEw4GpenZScKSehMW5R858vd18u OAtRuEZYcKrmWxX49fTzp6vOT9QIlmAbhYySuDDpfM2XMfpJUQS5VK0IJ+CVI6MGbEUkFRdFg6Kj 7K0tRmV5XnSAjUeQKgT6e7sz8mnOr7WS8VHroCKzNafeYj4xn/N0FtMrMVmg8Esj+zbEP3TRCuOo 6JDqVkTBVmj+StUaiRBAxxMJbQFaG6nyDDRNVb6Z5nkpvMqzEDjBDzCF/5dWPqyf/RMSDJ0Pk0Bi mmKjsU1f6o9tMljbASy1iUzSz6osq6o8P+VMkpHE8WVZZkCLQwKPIX5T0LIk1BzpPjJMYn0fIhUl 151LqhfAmubOWJsVXMxvLLK1oLurLmbl2SxdF4UcuRWHtrMUt1alYOt+KM1MkxrNFTOj1JBPSKlc rPqE2TuFaao9BJ5+HNj7p1CV2TYEjz4OHiJyZXBxCG6NA3wvgR1a1jt/wuNo7iTOodk+IUPYcT14 eWcI/HsR4pNAIzetAS1sfKRDW+hqDr3E2RLw93v/kz9xjqycdbQsNQ+/VgIVZ/a7IzZeVuNx2q6s jM++jkjBY8v82OJW7Q2kO6WnwcssJv9o96JGaF9pr2epKpmEk1S75jLiXrmJuyWml0Gq2Sy70UZ5 Ee/ds5f7W0/ketm8CvQ9AyPR9wH2iyUmb4i480334WC2iqBNZukB1x5v2sbMxP7lSOt+rGevw/s2 /QMAAP//AwBQSwMEFAAGAAgAAAAhAHipAaXkAAAADwEAAA8AAABkcnMvZG93bnJldi54bWxMj0FO wzAQRfdI3MEaJHat3TQJbYhTISSERBdVS7t3Y2MH4nGI3dbcHncFuz+apz9v6lW0PTmr0XcOOcym DIjC1skONYf9+8tkAcQHgVL0DhWHH+Vh1dze1KKS7oJbdd4FTVIJ+kpwMCEMFaW+NcoKP3WDwrT7 cKMVIY2jpnIUl1Rue5oxVlIrOkwXjBjUs1Ht1+5kOazNQa9fs+98r7d0yOwmFp9vkfP7u/j0CCSo GP5guOondWiS09GdUHrSc5jMHrIysSmVy3kB5MrkbL4EckyJ5WUBtKnp/z+aXwAAAP//AwBQSwEC LQAUAAYACAAAACEAtoM4kv4AAADhAQAAEwAAAAAAAAAAAAAAAAAAAAAAW0NvbnRlbnRfVHlwZXNd LnhtbFBLAQItABQABgAIAAAAIQA4/SH/1gAAAJQBAAALAAAAAAAAAAAAAAAAAC8BAABfcmVscy8u cmVsc1BLAQItABQABgAIAAAAIQA1jDaiWwIAACcFAAAOAAAAAAAAAAAAAAAAAC4CAABkcnMvZTJv RG9jLnhtbFBLAQItABQABgAIAAAAIQB4qQGl5AAAAA8BAAAPAAAAAAAAAAAAAAAAALUEAABkcnMv ZG93bnJldi54bWxQSwUGAAAAAAQABADzAAAAxgUAAAAA ">
+                <v:shadow on="t" color="black" opacity="22937f" offset="0,.63889mm" origin=",.5"/>
+              </v:rect>
+            </w:pict>
+          </mc:Fallback>
+        </mc:AlternateContent>
+      </w:r>
+      <w:r>
+        <w:rPr>
+          <w:b/>
+          <w:bCs/>
+          <w:noProof/>
+          <w:sz w:val="32"/>
+          <w:szCs w:val="40"/>
+        </w:rPr>
+        <mc:AlternateContent>
+          <mc:Choice Requires="wps">
+            <w:drawing>
+              <wp:anchor distT="0" distB="0" distL="114300" distR="114300" simplePos="0" relativeHeight="251658241" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1" wp14:anchorId="042332DB" wp14:editId="4477A20F">
+                <wp:simplePos x="0" y="0"/>
+                <wp:positionH relativeFrom="column">
+                  <wp:posOffset>60142</wp:posOffset>
+                </wp:positionH>
+                <wp:positionV relativeFrom="paragraph">
+                  <wp:posOffset>-1048420</wp:posOffset>
+                </wp:positionV>
+                <wp:extent cx="5854700" cy="8861608"/>
+                <wp:effectExtent l="0" t="0" r="0" b="0"/>
+                <wp:wrapNone/>
+                <wp:docPr id="598129731" name="Textfeld 5"/>
+                <wp:cNvGraphicFramePr/>
+                <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+                  <a:graphicData uri="http://schemas.microsoft.com/office/word/2010/wordprocessingShape">
+                    <wps:wsp>
+                      <wps:cNvSpPr txBox="1"/>
+                      <wps:spPr>
+                        <a:xfrm>
+                          <a:off x="0" y="0"/>
+                          <a:ext cx="5854700" cy="8861608"/>
+                        </a:xfrm>
+                        <a:prstGeom prst="rect">
+                          <a:avLst/>
+                        </a:prstGeom>
+                        <a:noFill/>
+                        <a:ln w="6350">
+                          <a:noFill/>
+                        </a:ln>
+                      </wps:spPr>
+                      <wps:txbx>
+                        <w:txbxContent>
+                          <w:p w14:paraId="7BAAAA36" w14:textId="77777777" w:rsidR="00741186" w:rsidRDefault="00741186" w:rsidP="00741186">
+                            <w:pPr>
+                              <w:ind w:right="90"/>
+                              <w:rPr>
+                                <w:rFonts w:eastAsiaTheme="majorEastAsia" w:cs="Akkurat LL"/>
+                                <w:sz w:val="36"/>
+                                <w:szCs w:val="36"/>
+                                <w:lang w:eastAsia="zh-CN"/>
+                              </w:rPr>
+                            </w:pPr>
+                          </w:p>
+                          <w:p w14:paraId="5C8D156F" w14:textId="77777777" w:rsidR="00741186" w:rsidRDefault="00741186" w:rsidP="00741186">
+                            <w:pPr>
+                              <w:ind w:left="0" w:right="90"/>
+                              <w:rPr>
+                                <w:rFonts w:eastAsiaTheme="majorEastAsia" w:cs="Akkurat LL"/>
+                                <w:sz w:val="36"/>
+                                <w:szCs w:val="36"/>
+                                <w:lang w:eastAsia="zh-CN"/>
+                              </w:rPr>
+                            </w:pPr>
+                          </w:p>
+                          <w:p w14:paraId="0CF3975D" w14:textId="77777777" w:rsidR="00741186" w:rsidRDefault="00741186" w:rsidP="00741186">
+                            <w:pPr>
+                              <w:ind w:left="0" w:right="90"/>
+                              <w:rPr>
+                                <w:rFonts w:eastAsiaTheme="majorEastAsia" w:cs="Akkurat LL"/>
+                                <w:sz w:val="36"/>
+                                <w:szCs w:val="36"/>
+                                <w:lang w:eastAsia="zh-CN"/>
+                              </w:rPr>
+                            </w:pPr>
+                          </w:p>
+                          <w:p w14:paraId="13FD3324" w14:textId="77777777" w:rsidR="00741186" w:rsidRDefault="00741186" w:rsidP="00741186">
+                            <w:pPr>
+                              <w:ind w:left="0" w:right="90"/>
+                              <w:rPr>
+                                <w:rFonts w:eastAsiaTheme="majorEastAsia" w:cs="Akkurat LL"/>
+                                <w:sz w:val="36"/>
+                                <w:szCs w:val="36"/>
+                                <w:lang w:eastAsia="zh-CN"/>
+                              </w:rPr>
+                            </w:pPr>
+                          </w:p>
+                          <w:p w14:paraId="557D0EA6" w14:textId="15EBCA50" w:rsidR="00741186" w:rsidRPr="0032200E" w:rsidRDefault="009169F1" w:rsidP="00741186">
+                            <w:pPr>
+                              <w:ind w:right="90"/>
+                              <w:rPr>
+                                <w:rFonts w:ascii="Wavetable" w:eastAsiaTheme="majorEastAsia" w:hAnsi="Wavetable" w:cs="Akkurat LL"/>
+                                <w:b/>
+                                <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                                <w:sz w:val="80"/>
+                                <w:szCs w:val="80"/>
+                                <w:lang w:eastAsia="zh-CN"/>
+                              </w:rPr>
+                            </w:pPr>
+                            <w:r>
+                              <w:rPr>
+                                <w:rFonts w:ascii="Wavetable" w:eastAsiaTheme="majorEastAsia" w:hAnsi="Wavetable" w:cs="Akkurat LL"/>
+                                <w:b/>
+                                <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                                <w:sz w:val="80"/>
+                                <w:szCs w:val="80"/>
+                                <w:lang w:eastAsia="zh-CN"/>
+                              </w:rPr>
+                              <w:t>{{COVER_TITLE}}</w:t>
+                            </w:r>
+                          </w:p>
+                          <w:p w14:paraId="39A7E92C" w14:textId="4B621500" w:rsidR="00741186" w:rsidRPr="0032200E" w:rsidRDefault="00741186" w:rsidP="00741186">
+                            <w:pPr>
+                              <w:ind w:right="90"/>
+                              <w:rPr>
+                                <w:rFonts w:ascii="Wavetable" w:eastAsiaTheme="majorEastAsia" w:hAnsi="Wavetable" w:cs="Akkurat LL"/>
+                                <w:b/>
+                                <w:bCs/>
+                                <w:sz w:val="40"/>
+                                <w:szCs w:val="40"/>
+                                <w:lang w:eastAsia="zh-CN"/>
+                              </w:rPr>
+                            </w:pPr>
+                            <w:r>
+                              <w:rPr>
+                                <w:rFonts w:ascii="Wavetable" w:eastAsiaTheme="majorEastAsia" w:hAnsi="Wavetable" w:cs="Akkurat LL"/>
+                                <w:b/>
+                                <w:bCs/>
+                                <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                                <w:sz w:val="60"/>
+                                <w:szCs w:val="60"/>
+                                <w:lang w:eastAsia="zh-CN"/>
+                              </w:rPr>
+                              <w:br/>
+                            </w:r>
+                            <w:r>
+                              <w:rPr>
+                                <w:rFonts w:ascii="Wavetable" w:eastAsiaTheme="majorEastAsia" w:hAnsi="Wavetable" w:cs="Akkurat LL"/>
+                                <w:b/>
+                                <w:bCs/>
+                                <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                                <w:sz w:val="40"/>
+                                <w:szCs w:val="40"/>
+                                <w:lang w:eastAsia="zh-CN"/>
+                              </w:rPr>
+                              <w:t>{{COVER_SUBTITLE}}</w:t>
+                            </w:r>
+                          </w:p>
+                          <w:p w14:paraId="79A901EA" w14:textId="77777777" w:rsidR="00741186" w:rsidRPr="0032200E" w:rsidRDefault="00741186" w:rsidP="00741186">
+                            <w:pPr>
+                              <w:ind w:right="90"/>
+                              <w:rPr>
+                                <w:rFonts w:ascii="Wavetable" w:eastAsiaTheme="majorEastAsia" w:hAnsi="Wavetable" w:cs="Akkurat LL"/>
+                                <w:b/>
+                                <w:bCs/>
+                                <w:sz w:val="52"/>
+                                <w:szCs w:val="52"/>
+                                <w:lang w:eastAsia="zh-CN"/>
+                              </w:rPr>
+                            </w:pPr>
+                          </w:p>
+                          <w:p w14:paraId="3C6A87E7" w14:textId="77777777" w:rsidR="00741186" w:rsidRPr="0032200E" w:rsidRDefault="00741186" w:rsidP="00991A42">
+                            <w:pPr>
+                              <w:ind w:left="0"/>
+                              <w:rPr>
+                                <w:rFonts w:cs="Akkurat LL"/>
+                                <w:b/>
+                                <w:bCs/>
+                                <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                                <w:sz w:val="50"/>
+                                <w:szCs w:val="50"/>
+                              </w:rPr>
+                            </w:pPr>
+                          </w:p>
+                          <w:p w14:paraId="73814826" w14:textId="77777777" w:rsidR="00991A42" w:rsidRPr="0032200E" w:rsidRDefault="00991A42" w:rsidP="009169F1">
+                            <w:pPr>
+                              <w:ind w:left="0"/>
+                              <w:rPr>
+                                <w:rFonts w:cs="Akkurat LL"/>
+                                <w:b/>
+                                <w:bCs/>
+                                <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                                <w:sz w:val="50"/>
+                                <w:szCs w:val="50"/>
+                              </w:rPr>
+                            </w:pPr>
+                          </w:p>
+                          <w:p w14:paraId="0F60CDC2" w14:textId="77777777" w:rsidR="00991A42" w:rsidRPr="0032200E" w:rsidRDefault="00991A42" w:rsidP="00741186">
+                            <w:pPr>
+                              <w:rPr>
+                                <w:rFonts w:cs="Akkurat LL"/>
+                                <w:b/>
+                                <w:bCs/>
+                                <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                                <w:sz w:val="50"/>
+                                <w:szCs w:val="50"/>
+                              </w:rPr>
+                            </w:pPr>
+                          </w:p>
+                          <w:p w14:paraId="5DEC6FB9" w14:textId="7BA5897F" w:rsidR="00741186" w:rsidRPr="00991A42" w:rsidRDefault="00C46292" w:rsidP="00741186">
+                            <w:pPr>
+                              <w:rPr>
+                                <w:rFonts w:cs="Akkurat LL"/>
+                                <w:b/>
+                                <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                                <w:sz w:val="40"/>
+                                <w:szCs w:val="40"/>
+                                <w:lang w:val="en-US"/>
+                              </w:rPr>
+                            </w:pPr>
+                            <w:r>
+                              <w:rPr>
+                                <w:rFonts w:cs="Akkurat LL"/>
+                                <w:b/>
+                                <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                                <w:sz w:val="40"/>
+                                <w:szCs w:val="40"/>
+                                <w:lang w:val="en-US"/>
+                              </w:rPr>
+                              <w:t xml:space="preserve">{{COVER_CLIENT_X_OT}}  </w:t>
+                            </w:r>
+                          </w:p>
+                          <w:p w14:paraId="5286FEFF" w14:textId="77777777" w:rsidR="00741186" w:rsidRPr="00803919" w:rsidRDefault="00741186" w:rsidP="00741186">
+                            <w:pPr>
+                              <w:rPr>
+                                <w:rFonts w:cs="Akkurat LL"/>
+                                <w:color w:val="000000"/>
+                                <w:lang w:val="en-US"/>
+                              </w:rPr>
+                            </w:pPr>
+                          </w:p>
+                          <w:p w14:paraId="1FF160F8" w14:textId="77777777" w:rsidR="00741186" w:rsidRPr="002E34D3" w:rsidRDefault="00741186" w:rsidP="00741186">
+                            <w:pPr>
+                              <w:rPr>
+                                <w:rFonts w:cs="Akkurat LL"/>
+                                <w:b/>
+                                <w:bCs/>
+                                <w:color w:val="000000"/>
+                                <w:lang w:val="en-US"/>
+                              </w:rPr>
+                            </w:pPr>
+                          </w:p>
+                        </w:txbxContent>
+                      </wps:txbx>
+                      <wps:bodyPr rot="0" spcFirstLastPara="0" vertOverflow="overflow" horzOverflow="overflow" vert="horz" wrap="square" lIns="91440" tIns="45720" rIns="91440" bIns="45720" numCol="1" spcCol="0" rtlCol="0" fromWordArt="0" anchor="t" anchorCtr="0" forceAA="0" compatLnSpc="1">
+                        <a:prstTxWarp prst="textNoShape">
+                          <a:avLst/>
+                        </a:prstTxWarp>
+                        <a:noAutofit/>
+                      </wps:bodyPr>
+                    </wps:wsp>
+                  </a:graphicData>
+                </a:graphic>
+                <wp14:sizeRelH relativeFrom="margin">
+                  <wp14:pctWidth>0</wp14:pctWidth>
+                </wp14:sizeRelH>
+                <wp14:sizeRelV relativeFrom="margin">
+                  <wp14:pctHeight>0</wp14:pctHeight>
+                </wp14:sizeRelV>
+              </wp:anchor>
+            </w:drawing>
+          </mc:Choice>
+          <mc:Fallback>
+            <w:pict>
+              <v:shapetype w14:anchorId="042332DB" id="_x0000_t202" coordsize="21600,21600" o:spt="202" path="m,l,21600r21600,l21600,xe">
+                <v:stroke joinstyle="miter"/>
+                <v:path gradientshapeok="t" o:connecttype="rect"/>
+              </v:shapetype>
+              <v:shape id="Textfeld 5" o:spid="_x0000_s1026" type="#_x0000_t202" style="position:absolute;left:0;text-align:left;margin-left:4.75pt;margin-top:-82.55pt;width:461pt;height:697.75pt;z-index:251658241;visibility:visible;mso-wrap-style:square;mso-width-percent:0;mso-height-percent:0;mso-wrap-distance-left:9pt;mso-wrap-distance-top:0;mso-wrap-distance-right:9pt;mso-wrap-distance-bottom:0;mso-position-horizontal:absolute;mso-position-horizontal-relative:text;mso-position-vertical:absolute;mso-position-vertical-relative:text;mso-width-percent:0;mso-height-percent:0;mso-width-relative:margin;mso-height-relative:margin;v-text-anchor:top" o:gfxdata="UEsDBBQABgAIAAAAIQC2gziS/gAAAOEBAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbJSRQU7DMBBF 90jcwfIWJU67QAgl6YL0S0CoHGBkTxKLZGx5TGhvj5O2G0SRWNoz/78nu9wcxkFMGNg6quQqL6RA 0s5Y6ir5vt9lD1JwBDIwOMJKHpHlpr69KfdHjyxSmriSfYz+USnWPY7AufNIadK6MEJMx9ApD/oD OlTrorhX2lFEilmcO2RdNtjC5xDF9pCuTyYBB5bi6bQ4syoJ3g9WQ0ymaiLzg5KdCXlKLjvcW893 SUOqXwnz5DrgnHtJTxOsQfEKIT7DmDSUCaxw7Rqn8787ZsmRM9e2VmPeBN4uqYvTtW7jvijg9N/y JsXecLq0q+WD6m8AAAD//wMAUEsDBBQABgAIAAAAIQA4/SH/1gAAAJQBAAALAAAAX3JlbHMvLnJl bHOkkMFqwzAMhu+DvYPRfXGawxijTi+j0GvpHsDYimMaW0Yy2fr2M4PBMnrbUb/Q94l/f/hMi1qR JVI2sOt6UJgd+ZiDgffL8ekFlFSbvV0oo4EbChzGx4f9GRdb25HMsYhqlCwG5lrLq9biZkxWOiqY 22YiTra2kYMu1l1tQD30/bPm3wwYN0x18gb45AdQl1tp5j/sFB2T0FQ7R0nTNEV3j6o9feQzro1i OWA14Fm+Q8a1a8+Bvu/d/dMb2JY5uiPbhG/ktn4cqGU/er3pcvwCAAD//wMAUEsDBBQABgAIAAAA IQCihE2RGAIAAC0EAAAOAAAAZHJzL2Uyb0RvYy54bWysU02P2jAQvVfqf7B8LwkU2DQirOiuqCqh 3ZXYas/GsUkkx+PahoT++o6d8KFtT1UvzoxnMh/vPS/uu0aRo7CuBl3Q8SilRGgOZa33Bf3xuv6U UeI80yVToEVBT8LR++XHD4vW5GICFahSWIJFtMtbU9DKe5MnieOVaJgbgREagxJswzy6dp+UlrVY vVHJJE3nSQu2NBa4cA5vH/sgXcb6Ugrun6V0whNVUJzNx9PGcxfOZLlg+d4yU9V8GIP9wxQNqzU2 vZR6ZJ6Rg63/KNXU3IID6UccmgSkrLmIO+A24/TdNtuKGRF3QXCcucDk/l9Z/nTcmhdLfPcVOiQw ANIalzu8DPt00jbhi5MSjCOEpwtsovOE4+Usm03vUgxxjGXZfDxPs1Anuf5urPPfBDQkGAW1yEuE ix03zvep55TQTcO6VipyozRpCzr/PEvjD5cIFlcae1yHDZbvdt2wwQ7KEy5moefcGb6usfmGOf/C LJKMA6Nw/TMeUgE2gcGipAL762/3IR+xxyglLYqmoO7ngVlBifqukZUv4+k0qCw609ndBB17G9nd RvSheQDU5RifiOHRDPlenU1poXlDfa9CVwwxzbF3Qf3ZfPC9lPF9cLFaxSTUlWF+o7eGh9IBzgDt a/fGrBnw90jdE5zlxfJ3NPS5PRGrgwdZR44CwD2qA+6oycjy8H6C6G/9mHV95cvfAAAA//8DAFBL AwQUAAYACAAAACEA4+jJOucAAAAQAQAADwAAAGRycy9kb3ducmV2LnhtbEyPT0/CQBDF7yZ8h82Q eINtiyVQuiWkhpgYPYBcvG27Q9u4f2p3geqndzzpZZKZ+c2b9/LtaDS74uA7ZwXE8wgY2tqpzjYC Tm/72QqYD9IqqZ1FAV/oYVtM7nKZKXezB7weQ8NIxPpMCmhD6DPOfd2ikX7uerS0O7vByEDt0HA1 yBuJG82TKFpyIztLH1rZY9li/XG8GAHP5f5VHqrErL51+fRy3vWfp/dUiPvp+LihstsACziGvwv4 zUD+oSBjlbtY5ZkWsE4JFDCLl2kMjID1IqZRRWSyiB6AFzn/H6T4AQAA//8DAFBLAQItABQABgAI AAAAIQC2gziS/gAAAOEBAAATAAAAAAAAAAAAAAAAAAAAAABbQ29udGVudF9UeXBlc10ueG1sUEsB Ai0AFAAGAAgAAAAhADj9If/WAAAAlAEAAAsAAAAAAAAAAAAAAAAALwEAAF9yZWxzLy5yZWxzUEsB Ai0AFAAGAAgAAAAhAKKETZEYAgAALQQAAA4AAAAAAAAAAAAAAAAALgIAAGRycy9lMm9Eb2MueG1s UEsBAi0AFAAGAAgAAAAhAOPoyTrnAAAAEAEAAA8AAAAAAAAAAAAAAAAAcgQAAGRycy9kb3ducmV2 LnhtbFBLBQYAAAAABAAEAPMAAACGBQAAAAA= " filled="f" stroked="f" strokeweight=".5pt">
+                <v:textbox>
+                  <w:txbxContent>
+                    <w:p w14:paraId="7BAAAA36" w14:textId="77777777" w:rsidR="00741186" w:rsidRDefault="00741186" w:rsidP="00741186">
+                      <w:pPr>
+                        <w:ind w:right="90"/>
+                        <w:rPr>
+                          <w:rFonts w:eastAsiaTheme="majorEastAsia" w:cs="Akkurat LL"/>
+                          <w:sz w:val="36"/>
+                          <w:szCs w:val="36"/>
+                          <w:lang w:eastAsia="zh-CN"/>
+                        </w:rPr>
+                      </w:pPr>
+                    </w:p>
+                    <w:p w14:paraId="5C8D156F" w14:textId="77777777" w:rsidR="00741186" w:rsidRDefault="00741186" w:rsidP="00741186">
+                      <w:pPr>
+                        <w:ind w:left="0" w:right="90"/>
+                        <w:rPr>
+                          <w:rFonts w:eastAsiaTheme="majorEastAsia" w:cs="Akkurat LL"/>
+                          <w:sz w:val="36"/>
+                          <w:szCs w:val="36"/>
+                          <w:lang w:eastAsia="zh-CN"/>
+                        </w:rPr>
+                      </w:pPr>
+                    </w:p>
+                    <w:p w14:paraId="0CF3975D" w14:textId="77777777" w:rsidR="00741186" w:rsidRDefault="00741186" w:rsidP="00741186">
+                      <w:pPr>
+                        <w:ind w:left="0" w:right="90"/>
+                        <w:rPr>
+                          <w:rFonts w:eastAsiaTheme="majorEastAsia" w:cs="Akkurat LL"/>
+                          <w:sz w:val="36"/>
+                          <w:szCs w:val="36"/>
+                          <w:lang w:eastAsia="zh-CN"/>
+                        </w:rPr>
+                      </w:pPr>
+                    </w:p>
+                    <w:p w14:paraId="13FD3324" w14:textId="77777777" w:rsidR="00741186" w:rsidRDefault="00741186" w:rsidP="00741186">
+                      <w:pPr>
+                        <w:ind w:left="0" w:right="90"/>
+                        <w:rPr>
+                          <w:rFonts w:eastAsiaTheme="majorEastAsia" w:cs="Akkurat LL"/>
+                          <w:sz w:val="36"/>
+                          <w:szCs w:val="36"/>
+                          <w:lang w:eastAsia="zh-CN"/>
+                        </w:rPr>
+                      </w:pPr>
+                    </w:p>
+                    <w:p w14:paraId="557D0EA6" w14:textId="15EBCA50" w:rsidR="00741186" w:rsidRPr="0032200E" w:rsidRDefault="009169F1" w:rsidP="00741186">
+                      <w:pPr>
+                        <w:ind w:right="90"/>
+                        <w:rPr>
+                          <w:rFonts w:ascii="Wavetable" w:eastAsiaTheme="majorEastAsia" w:hAnsi="Wavetable" w:cs="Akkurat LL"/>
+                          <w:b/>
+                          <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                          <w:sz w:val="80"/>
+                          <w:szCs w:val="80"/>
+                          <w:lang w:eastAsia="zh-CN"/>
+                        </w:rPr>
+                      </w:pPr>
+                      <w:r>
+                        <w:rPr>
+                          <w:rFonts w:ascii="Wavetable" w:eastAsiaTheme="majorEastAsia" w:hAnsi="Wavetable" w:cs="Akkurat LL"/>
+                          <w:b/>
+                          <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                          <w:sz w:val="80"/>
+                          <w:szCs w:val="80"/>
+                          <w:lang w:eastAsia="zh-CN"/>
+                        </w:rPr>
+                        <w:t>{{COVER_TITLE}}</w:t>
+                      </w:r>
+                    </w:p>
+                    <w:p w14:paraId="39A7E92C" w14:textId="4B621500" w:rsidR="00741186" w:rsidRPr="0032200E" w:rsidRDefault="00741186" w:rsidP="00741186">
+                      <w:pPr>
+                        <w:ind w:right="90"/>
+                        <w:rPr>
+                          <w:rFonts w:ascii="Wavetable" w:eastAsiaTheme="majorEastAsia" w:hAnsi="Wavetable" w:cs="Akkurat LL"/>
+                          <w:b/>
+                          <w:bCs/>
+                          <w:sz w:val="40"/>
+                          <w:szCs w:val="40"/>
+                          <w:lang w:eastAsia="zh-CN"/>
+                        </w:rPr>
+                      </w:pPr>
+                      <w:r>
+                        <w:rPr>
+                          <w:rFonts w:ascii="Wavetable" w:eastAsiaTheme="majorEastAsia" w:hAnsi="Wavetable" w:cs="Akkurat LL"/>
+                          <w:b/>
+                          <w:bCs/>
+                          <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                          <w:sz w:val="60"/>
+                          <w:szCs w:val="60"/>
+                          <w:lang w:eastAsia="zh-CN"/>
+                        </w:rPr>
+                        <w:br/>
+                      </w:r>
+                      <w:r>
+                        <w:rPr>
+                          <w:rFonts w:ascii="Wavetable" w:eastAsiaTheme="majorEastAsia" w:hAnsi="Wavetable" w:cs="Akkurat LL"/>
+                          <w:b/>
+                          <w:bCs/>
+                          <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                          <w:sz w:val="40"/>
+                          <w:szCs w:val="40"/>
+                          <w:lang w:eastAsia="zh-CN"/>
+                        </w:rPr>
+                        <w:t>{{COVER_SUBTITLE}}</w:t>
+                      </w:r>
+                    </w:p>
+                    <w:p w14:paraId="79A901EA" w14:textId="77777777" w:rsidR="00741186" w:rsidRPr="0032200E" w:rsidRDefault="00741186" w:rsidP="00741186">
+                      <w:pPr>
+                        <w:ind w:right="90"/>
+                        <w:rPr>
+                          <w:rFonts w:ascii="Wavetable" w:eastAsiaTheme="majorEastAsia" w:hAnsi="Wavetable" w:cs="Akkurat LL"/>
+                          <w:b/>
+                          <w:bCs/>
+                          <w:sz w:val="52"/>
+                          <w:szCs w:val="52"/>
+                          <w:lang w:eastAsia="zh-CN"/>
+                        </w:rPr>
+                      </w:pPr>
+                    </w:p>
+                    <w:p w14:paraId="3C6A87E7" w14:textId="77777777" w:rsidR="00741186" w:rsidRPr="0032200E" w:rsidRDefault="00741186" w:rsidP="00991A42">
+                      <w:pPr>
+                        <w:ind w:left="0"/>
+                        <w:rPr>
+                          <w:rFonts w:cs="Akkurat LL"/>
+                          <w:b/>
+                          <w:bCs/>
+                          <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                          <w:sz w:val="50"/>
+                          <w:szCs w:val="50"/>
+                        </w:rPr>
+                      </w:pPr>
+                    </w:p>
+                    <w:p w14:paraId="73814826" w14:textId="77777777" w:rsidR="00991A42" w:rsidRPr="0032200E" w:rsidRDefault="00991A42" w:rsidP="009169F1">
+                      <w:pPr>
+                        <w:ind w:left="0"/>
+                        <w:rPr>
+                          <w:rFonts w:cs="Akkurat LL"/>
+                          <w:b/>
+                          <w:bCs/>
+                          <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                          <w:sz w:val="50"/>
+                          <w:szCs w:val="50"/>
+                        </w:rPr>
+                      </w:pPr>
+                    </w:p>
+                    <w:p w14:paraId="0F60CDC2" w14:textId="77777777" w:rsidR="00991A42" w:rsidRPr="0032200E" w:rsidRDefault="00991A42" w:rsidP="00741186">
+                      <w:pPr>
+                        <w:rPr>
+                          <w:rFonts w:cs="Akkurat LL"/>
+                          <w:b/>
+                          <w:bCs/>
+                          <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                          <w:sz w:val="50"/>
+                          <w:szCs w:val="50"/>
+                        </w:rPr>
+                      </w:pPr>
+                    </w:p>
+                    <w:p w14:paraId="5DEC6FB9" w14:textId="7BA5897F" w:rsidR="00741186" w:rsidRPr="00991A42" w:rsidRDefault="00C46292" w:rsidP="00741186">
+                      <w:pPr>
+                        <w:rPr>
+                          <w:rFonts w:cs="Akkurat LL"/>
+                          <w:b/>
+                          <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                          <w:sz w:val="40"/>
+                          <w:szCs w:val="40"/>
+                          <w:lang w:val="en-US"/>
+                        </w:rPr>
+                      </w:pPr>
+                      <w:r>
+                        <w:rPr>
+                          <w:rFonts w:cs="Akkurat LL"/>
+                          <w:b/>
+                          <w:color w:val="FFFFFF" w:themeColor="background1"/>
+                          <w:sz w:val="40"/>
+                          <w:szCs w:val="40"/>
+                          <w:lang w:val="en-US"/>
+                        </w:rPr>
+                        <w:t xml:space="preserve">{{COVER_CLIENT_X_OT}}  </w:t>
+                      </w:r>
+                    </w:p>
+                    <w:p w14:paraId="5286FEFF" w14:textId="77777777" w:rsidR="00741186" w:rsidRPr="00803919" w:rsidRDefault="00741186" w:rsidP="00741186">
+                      <w:pPr>
+                        <w:rPr>
+                          <w:rFonts w:cs="Akkurat LL"/>
+                          <w:color w:val="000000"/>
+                          <w:lang w:val="en-US"/>
+                        </w:rPr>
+                      </w:pPr>
+                    </w:p>
+                    <w:p w14:paraId="1FF160F8" w14:textId="77777777" w:rsidR="00741186" w:rsidRPr="002E34D3" w:rsidRDefault="00741186" w:rsidP="00741186">
+                      <w:pPr>
+                        <w:rPr>
+                          <w:rFonts w:cs="Akkurat LL"/>
+                          <w:b/>
+                          <w:bCs/>
+                          <w:color w:val="000000"/>
+                          <w:lang w:val="en-US"/>
+                        </w:rPr>
+                      </w:pPr>
+                    </w:p>
+                  </w:txbxContent>
+                </v:textbox>
+              </v:shape>
+            </w:pict>
+          </mc:Fallback>
+        </mc:AlternateContent>
+      </w:r>
+      <w:r>
+        <w:rPr>
+          <w:noProof/>
+          <w:color w:val="55286E"/>
+          <w:sz w:val="24"/>
+        </w:rPr>
+        <w:drawing>
+          <wp:anchor distT="0" distB="0" distL="114300" distR="114300" simplePos="0" relativeHeight="251658242" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1" wp14:anchorId="45FE7CA6" wp14:editId="77F9D2E5">
+            <wp:simplePos x="0" y="0"/>
+            <wp:positionH relativeFrom="column">
+              <wp:posOffset>5043805</wp:posOffset>
+            </wp:positionH>
+            <wp:positionV relativeFrom="paragraph">
+              <wp:posOffset>-1046106</wp:posOffset>
+            </wp:positionV>
+            <wp:extent cx="1029335" cy="1029335"/>
+            <wp:effectExtent l="0" t="0" r="0" b="0"/>
+            <wp:wrapNone/>
+            <wp:docPr id="350826452" name="Picture 1426612735" descr="Ein Bild, das Schrift, Grafiken, Kreis, Screenshot enthält. Automatisch generierte Beschreibung"/>
+            <wp:cNvGraphicFramePr>
+              <a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/>
+            </wp:cNvGraphicFramePr>
+            <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+              <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+                <pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+                  <pic:nvPicPr>
+                    <pic:cNvPr id="1426612735" name="Grafik 3" descr="Ein Bild, das Schrift, Grafiken, Kreis, Screenshot enthält. Automatisch generierte Beschreibung"/>
+                    <pic:cNvPicPr/>
+                  </pic:nvPicPr>
+                  <pic:blipFill>
+                    <a:blip r:embed="rId11"/>
+                    <a:stretch>
+                      <a:fillRect/>
+                    </a:stretch>
+                  </pic:blipFill>
+                  <pic:spPr>
+                    <a:xfrm>
+                      <a:off x="0" y="0"/>
+                      <a:ext cx="1029335" cy="1029335"/>
+                    </a:xfrm>
+                    <a:prstGeom prst="rect">
+                      <a:avLst/>
+                    </a:prstGeom>
+                  </pic:spPr>
+                </pic:pic>
+              </a:graphicData>
+            </a:graphic>
+            <wp14:sizeRelH relativeFrom="page">
+              <wp14:pctWidth>0</wp14:pctWidth>
+            </wp14:sizeRelH>
+            <wp14:sizeRelV relativeFrom="page">
+              <wp14:pctHeight>0</wp14:pctHeight>
+            </wp14:sizeRelV>
+          </wp:anchor>
+        </w:drawing>
+      </w:r>
+    </w:p>
+    <!-- BODY_CONTENT_START -->
+    <!-- BODY_CONTENT_END -->
+    <w:sectPr w:rsidR="007E0B7C" w:rsidRPr="0042071C" w:rsidSect="00473B4C">
+      <w:headerReference w:type="first" r:id="rId14"/>
+      <w:headerReference w:type="default" r:id="rId14"/>
+      <w:footerReference w:type="even" r:id="rId12"/>
+      <w:footerReference w:type="default" r:id="rId13"/>
+      <w:footerReference w:type="first" r:id="rId15"/>
+      <w:pgSz w:w="11900" w:h="16840"/>
+      <w:pgMar w:top="1584" w:right="1296" w:bottom="806" w:left="1296" w:header="1699" w:footer="734" w:gutter="0"/>
+      <w:cols w:space="720"/>
+      <w:titlePg/>
+      <w:docGrid w:linePitch="286"/>
+    </w:sectPr>
+  </w:body>
+</w:document>

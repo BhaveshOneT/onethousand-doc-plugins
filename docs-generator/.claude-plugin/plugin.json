@@ -1,0 +1,26 @@
+{
+  "name": "docs-generator",
+  "version": "1.1.0",
+  "description": "Professional document generation plugin with One Thousand branding. Generates scope documents, proposals, and client-facing deliverables from hackathon summaries and project briefs. Includes architecture diagram generation (Graphviz), confidence-scored content, iterative quality review, and anti-hallucination verification. Supports English and German.",
+  "author": {
+    "name": "One Thousand GmbH"
+  },
+  "repository": "https://github.com/BhaveshOneT/docs-generator-plugin",
+  "license": "Proprietary",
+  "keywords": [
+    "scope-document",
+    "scope-doc",
+    "project-scope",
+    "document-generation",
+    "one-thousand",
+    "hackathon",
+    "docx-export",
+    "branded-documents",
+    "multi-language",
+    "anti-hallucination",
+    "architecture-diagram",
+    "client-deliverable",
+    "poc-scope",
+    "confidence-scoring"
+  ]
+}

@@ -11,10 +11,7 @@
     {
       "name": "docs-generator",
       "version": "1.1.0",
-      "source": {
-        "source": "github",
-        "repo": "BhaveshOneT/docs-generator-plugin"
-      },
+      "source": "./docs-generator",
       "description": "Scope document generator with One Thousand branding, Graphviz architecture diagrams, confidence scoring, and anti-hallucination verification. EN/DE support.",
       "category": "productivity"
     }
