@@ -58,7 +58,7 @@ The workflow: Extract information → Generate content with confidence scoring �
 
 ## Workflow
 
-### Phase 1: Input Collection
+### Phase 1: Input Collection + Background Setup
 
 Ask the user using AskUserQuestion:
 
@@ -71,13 +71,31 @@ Ask the user using AskUserQuestion:
    - Document subtitle (usually "Project Scope Document" / "Projekt Scope Dokument")
    - Client name × One Thousand (e.g., "RVT x One Thousand")
 
+#### Background: Pre-warm Dependencies
+
+**While waiting for user responses**, use the Task tool to launch a background agent that installs Python dependencies. This runs concurrently with user Q&A so there is zero setup delay when scripts run later:
+
+```bash
+pip install pdfplumber python-docx Pillow graphviz --break-system-packages --quiet 2>/dev/null
+# Verify Graphviz dot is available for diagram rendering
+which dot || echo "Graphviz not installed — will use Pillow fallback for diagrams"
+```
+
+This is purely infrastructure setup — it does not affect content generation in any way.
+
 ---
 
 ### Phase 2: Content Extraction
 
-Before generating, Claude **MUST** read these reference files:
+#### Parallel Reference File Loading
+
+Before generating, Claude **MUST** read these reference files. **Read ALL THREE files in parallel** (use multiple Read tool calls in a single message) to save time — they have no dependencies on each other and the content generation that follows needs all of them loaded in context:
+
 - `references/content-extraction-guide.md` — extraction patterns
 - `references/anti-hallucination-rules.md` — what NOT to invent
+- `references/section-templates-en.md` OR `references/section-templates-de.md` — writing patterns for the chosen language
+
+**Important:** These are data-loading calls, not generation steps. Reading them in parallel produces the exact same context as reading them sequentially — the order they are loaded does not matter. All three files will be fully available in context before any content generation begins.
 
 **From the hackathon document:**
 
@@ -103,10 +121,6 @@ Before generating, Claude **MUST** read these reference files:
 ---
 
 ### Phase 3: Content Generation with Confidence Scoring
-
-Read the appropriate language templates:
-- **English:** `references/section-templates-en.md`
-- **German:** `references/section-templates-de.md`
 
 Generate two JSON files that feed the document assembly script.
 
@@ -300,9 +314,24 @@ The content.json defines all document sections. Each section maps to a numbered 
 
 ---
 
-### Phase 4: Architecture Diagram (Required)
+### Phase 4: Architecture Diagram (Required) + Overlapped Execution
 
-Every scope document MUST include an architecture diagram. Either extract it from the source document or generate a new one based on the technical components discussed:
+Every scope document MUST include an architecture diagram. Either extract it from the source document or generate a new one based on the technical components discussed.
+
+#### Overlapped Diagram Generation
+
+**Performance optimization:** The architecture diagram depends only on the architecture data extracted in Phase 2 — it does NOT depend on the sprint design (Section 6) or other late-stage content. Therefore, when generating a new diagram, **launch diagram generation via the Task tool as a background agent** while continuing to write remaining sections (especially Section 6 — Sprint Design).
+
+**How to overlap:**
+1. After writing Sections 1–5 and preparing the architecture description JSON, launch the diagram generation script in a background Task agent
+2. Continue writing Section 6 (Sprint Design) in the main agent
+3. Collect the diagram result before proceeding to Phase 5 (Document Assembly)
+
+**Important:** This overlap is safe because the diagram generation is a standalone Python script that takes a JSON description as input and produces a PNG image. It has no dependency on Section 6 content, and Section 6 has no dependency on the diagram output. The final document assembly in Phase 5 needs both to be complete, which they will be.
+
+**If NOT overlapping** (e.g., extracting diagram from source document), run it sequentially as before — extraction is typically fast enough that overlapping provides minimal benefit.
+
+#### Diagram Generation
 
 ```bash
 python scripts/generate_architecture_diagram.py \
@@ -541,9 +570,9 @@ scope-document-generator/
 │   ├── generate_architecture_diagram.py # Generate diagram (Graphviz → Pillow fallback)
 │   └── generate_scope_doc.py           # Main DOCX generation script
 ├── references/
-│   ├── content-extraction-guide.md     # Read before Phase 2
-│   ├── section-templates-en.md         # English writing patterns
-│   ├── section-templates-de.md         # German writing patterns
-│   └── anti-hallucination-rules.md     # CRITICAL; read before Phase 3
+│   ├── content-extraction-guide.md     # Read in parallel at Phase 2 start
+│   ├── section-templates-en.md         # Read in parallel at Phase 2 start
+│   ├── section-templates-de.md         # Read in parallel at Phase 2 start (if German)
+│   └── anti-hallucination-rules.md     # Read in parallel at Phase 2 start
 └── SKILL.md                             # This file
 ```
