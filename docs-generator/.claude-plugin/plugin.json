@@ -1,7 +1,7 @@
 {
   "name": "docs-generator",
   "version": "1.2.0",
-  "description": "Professional document generation plugin with One Thousand branding. Generates scope documents, proposals, and client-facing deliverables from hackathon summaries and project briefs. Includes architecture diagram generation (Graphviz), confidence-scored content, iterative quality review, and anti-hallucination verification. Supports English and German.",
+  "description": "Professional document generation plugin with One Thousand branding. Generates scope documents, hackathon presentations, proposals, and client-facing deliverables from hackathon summaries and project briefs. Includes PPTX presentation generation with branded OT slide layouts, architecture diagram generation (Graphviz), confidence-scored content, iterative quality review, and anti-hallucination verification. Supports English and German.",
   "author": {
     "name": "One Thousand GmbH"
   },
@@ -21,6 +21,10 @@
     "architecture-diagram",
     "client-deliverable",
     "poc-scope",
-    "confidence-scoring"
+    "confidence-scoring",
+    "hackathon-presentation",
+    "pptx-generation",
+    "slide-deck",
+    "presentation-generator"
   ]
 }
