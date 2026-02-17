@@ -1,58 +1,131 @@
 #!/usr/bin/env python3
 """
-Hackathon Presentation Generator for One Thousand GmbH
+Hackathon Presentation Generator v2 — One Thousand GmbH
 
-Generates a branded, high-quality hackathon presentation from JSON content files
-using a pre-designed PPTX template with 43 slide layouts.
+Generates branded hackathon presentations that EXACTLY match the original
+manual format. All positions, font sizes, colors, and element types are
+derived from the original PPTX analysis.
 
-Supports:
-- Rich text formatting with mixed bold/normal text
-- Card-based layouts for structured content
-- Colored accent bars and visual separators
-- Speaker notes on key slides
-- Customizable agendas from JSON
-- System landscape, key metrics, and lessons learned slides
+Key design decisions matching original:
+- Theme colors (no explicit RGB) for most text — inherits from slide master
+- Only #00B050 green highlights and specific #FFFFFF white text are explicit
+- Manual TEXT_BOXes where original uses them (Pain, What's Next, etc.)
+- Placeholder resizing where original resizes them
+- AUTO_SHAPE with scheme fill for PoC summary lime box
 
 Usage:
-    python generate_hackathon_pptx.py \\
-        --template ../assets/templates/ot-hackathon-template.pptx \\
-        --variables variables.json \\
-        --content content.json \\
-        --output hackathon_presentation.pptx \\
+    python generate_v2.py \
+        --template ot-hackathon-template.pptx \
+        --variables variables.json \
+        --content content.json \
+        --output presentation.pptx \
         [--verbose]
-
-Author: One Thousand GmbH
-License: Proprietary
 """
 
 import argparse
 import json
 import logging
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from copy import deepcopy
 
 from pptx import Presentation
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
-from pptx.util import Inches, Pt
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.oxml import parse_xml
 from pptx.oxml.ns import nsdecls
+from lxml import etree
 
+# ---------------------------------------------------------------------------
+# Brand Colors (from original PPTX XML analysis)
+# ---------------------------------------------------------------------------
+# Theme mapping: dk1=#000000, lt1=#FFFFFF, dk2=#242424 (ash), lt2=#D5F89E (lime)
+# accent2=#19A960 (green)
+# Most text uses THEME colors (inherited) — only these explicit colors needed:
+OT_GREEN_HIGHLIGHT = RGBColor(0x00, 0xB0, 0x50)   # #00B050 — green inline highlights
+OT_WHITE = RGBColor(0xFF, 0xFF, 0xFF)               # Explicit white (only for What's Next content)
+OT_BLACK = RGBColor(0x00, 0x00, 0x00)               # Black text
+OT_MID_GRAY = RGBColor(0xBB, 0xBB, 0xBB)           # Placeholder hint text
 
-# One Thousand Brand Colors
-OT_GREEN = RGBColor(0x18, 0xA0, 0x5A)
-OT_DARK_GREEN = RGBColor(0x14, 0x7A, 0x46)
-OT_ASH = RGBColor(0x32, 0x32, 0x32)
-OT_WHITE = RGBColor(0xFF, 0xFF, 0xFF)
-OT_LIGHT_GRAY = RGBColor(0xE8, 0xE8, 0xE8)
-OT_MINT_BG = RGBColor(0xF0, 0xF8, 0xF3)
-OT_VERY_LIGHT_GRAY = RGBColor(0xF5, 0xF5, 0xF5)
-OT_CARD_BG = RGBColor(0x3E, 0x3E, 0x3E)  # Slightly lighter than ash, for cards on dark bg
-OT_MID_GRAY = RGBColor(0xBB, 0xBB, 0xBB)  # Subtle text on dark bg
+# Note: OT_LIME_BG (#D5F89E) is applied via schemeClr "bg2" (=lt2), not explicit RGB
+# Note: Most text does NOT set font.color.rgb — it inherits from theme
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+NS_A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+NS_P = 'http://schemas.openxmlformats.org/presentationml/2006/main'
+NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+
+# ---------------------------------------------------------------------------
+# Rich Text Parsing — **bold** and <<green>>
+# ---------------------------------------------------------------------------
+_RICH_RE = re.compile(r'(\*\*.*?\*\*|<<.*?>>)')
+
+
+def _parse_rich_segments(text: str) -> List[Tuple[str, str]]:
+    """Parse text with **bold** and <<green>> markup into segments."""
+    parts = _RICH_RE.split(text)
+    segments = []
+    for part in parts:
+        if not part:
+            continue
+        if part.startswith('**') and part.endswith('**'):
+            segments.append((part[2:-2], 'bold'))
+        elif part.startswith('<<') and part.endswith('>>'):
+            segments.append((part[2:-2], 'green'))
+        else:
+            segments.append((part, 'normal'))
+    return segments
+
+
+def add_rich_paragraph(text_frame, text: str, font_size: int = 13,
+                       use_theme_color: bool = True,
+                       explicit_color: RGBColor = None,
+                       green_color: RGBColor = OT_GREEN_HIGHLIGHT,
+                       spacing_before: int = 6, spacing_after: int = 6,
+                       is_first: bool = False, alignment=None,
+                       bold_base: bool = False):
+    """Add a paragraph with mixed bold/green/normal formatting.
+
+    Markup:
+      **text** → bold, theme or explicit color
+      <<text>> → normal, green_color (#00B050)
+      plain    → normal, theme or explicit color
+
+    If use_theme_color=True, normal/bold runs do NOT set font.color.rgb
+    (they inherit from theme). Only <<green>> runs get explicit color.
+    If explicit_color is set, it overrides theme for normal/bold runs.
+    """
+    p = text_frame.paragraphs[0] if is_first else text_frame.add_paragraph()
+    p.space_before = Pt(spacing_before)
+    p.space_after = Pt(spacing_after)
+    if alignment:
+        p.alignment = alignment
+
+    segments = _parse_rich_segments(text)
+    for seg_text, style in segments:
+        r = p.add_run()
+        r.text = seg_text
+        r.font.size = Pt(font_size)
+        if style == 'bold':
+            r.font.bold = True
+            if explicit_color:
+                r.font.color.rgb = explicit_color
+            # else: theme color (no explicit set)
+        elif style == 'green':
+            r.font.bold = False
+            r.font.color.rgb = green_color
+        else:
+            r.font.bold = bold_base
+            if explicit_color:
+                r.font.color.rgb = explicit_color
+            # else: theme color (no explicit set)
+    return p
 
 
 # ---------------------------------------------------------------------------
@@ -60,15 +133,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 def load_json(path: Path) -> Dict[str, Any]:
-    """Load JSON file from path."""
-    if not path.exists():
-        raise FileNotFoundError(f"JSON file not found: {path}")
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 
-def find_layout(prs: Presentation, name: str):
-    """Find a slide layout by name."""
+def find_layout(prs, name: str):
     for layout in prs.slide_layouts:
         if layout.name == name:
             return layout
@@ -77,34 +146,66 @@ def find_layout(prs: Presentation, name: str):
 
 
 def ph_by_idx(slide, idx: int):
-    """Return placeholder by idx, or None."""
     for ph in slide.placeholders:
         if ph.placeholder_format.idx == idx:
             return ph
     return None
 
 
-def set_ph_text(ph, text: str, size: int = None, bold: bool = False, color: RGBColor = None):
-    """Set text on a placeholder, preserving its existing formatting where possible."""
+def set_ph_text_theme(ph, text: str, size: int = None, bold: bool = False):
+    """Set text on a placeholder using THEME color (no explicit RGB).
+    This matches the original PPTX behavior where most text inherits from theme.
+    """
     if ph is None or not ph.has_text_frame:
         return
     tf = ph.text_frame
     tf.clear()
     p = tf.paragraphs[0]
-    p.text = text
+    r = p.add_run()
+    r.text = text
     if size:
-        p.font.size = Pt(size)
+        r.font.size = Pt(size)
     if bold:
-        p.font.bold = True
+        r.font.bold = True
+    # NO font.color.rgb set — inherits theme color
+
+
+def set_ph_text(ph, text: str, size: int = None, bold: bool = False,
+                color: RGBColor = None):
+    """Set text on a placeholder with optional explicit color."""
+    if ph is None or not ph.has_text_frame:
+        return
+    tf = ph.text_frame
+    tf.clear()
+    p = tf.paragraphs[0]
+    r = p.add_run()
+    r.text = text
+    if size:
+        r.font.size = Pt(size)
+    if bold:
+        r.font.bold = True
     if color:
-        p.font.color.rgb = color
+        r.font.color.rgb = color
 
 
-def add_textbox(slide, left, top, width, height, text,
-                font_size=14, bg_color=None, text_color=OT_ASH,
-                alignment=PP_ALIGN.CENTER, bold=False, word_wrap=True,
-                vertical_anchor=MSO_ANCHOR.MIDDLE):
-    """Add a text box with optional background to a slide."""
+def reposition_shape(shape, left=None, top=None, width=None, height=None):
+    """Reposition/resize a shape using inches."""
+    if left is not None:
+        shape.left = Inches(left)
+    if top is not None:
+        shape.top = Inches(top)
+    if width is not None:
+        shape.width = Inches(width)
+    if height is not None:
+        shape.height = Inches(height)
+
+
+def add_textbox_theme(slide, left, top, width, height, text,
+                      font_size=14, alignment=PP_ALIGN.LEFT, bold=False,
+                      word_wrap=True, vertical_anchor=MSO_ANCHOR.TOP):
+    """Add a textbox using THEME color (no explicit RGB set on font).
+    Text inherits color from the slide master/theme.
+    """
     tb = slide.shapes.add_textbox(
         Inches(left), Inches(top), Inches(width), Inches(height)
     )
@@ -112,304 +213,208 @@ def add_textbox(slide, left, top, width, height, text,
     tf.word_wrap = word_wrap
     tf.vertical_anchor = vertical_anchor
     p = tf.paragraphs[0]
-    p.text = text
-    p.font.size = Pt(font_size)
-    p.font.color.rgb = text_color
-    p.font.bold = bold
     p.alignment = alignment
+    r = p.add_run()
+    r.text = text
+    r.font.size = Pt(font_size)
+    r.font.bold = bold
+    # NO font.color.rgb — inherits from theme
+    return tb
+
+
+def add_textbox(slide, left, top, width, height, text,
+                font_size=14, text_color=None, alignment=PP_ALIGN.LEFT,
+                bold=False, word_wrap=True, vertical_anchor=MSO_ANCHOR.TOP,
+                bg_color=None):
+    """Add a textbox with explicit color."""
+    tb = slide.shapes.add_textbox(
+        Inches(left), Inches(top), Inches(width), Inches(height)
+    )
+    tf = tb.text_frame
+    tf.word_wrap = word_wrap
+    tf.vertical_anchor = vertical_anchor
+    p = tf.paragraphs[0]
+    p.alignment = alignment
+    r = p.add_run()
+    r.text = text
+    r.font.size = Pt(font_size)
+    r.font.bold = bold
+    if text_color:
+        r.font.color.rgb = text_color
     if bg_color:
         tb.fill.solid()
         tb.fill.fore_color.rgb = bg_color
     return tb
 
 
-def add_bullets_textbox(slide, left, top, width, height, bullets,
-                        font_size=14, text_color=OT_ASH, spacing=6):
-    """Add a text box with bullet points as separate paragraphs."""
-    tb = slide.shapes.add_textbox(
-        Inches(left), Inches(top), Inches(width), Inches(height)
-    )
-    tf = tb.text_frame
-    tf.word_wrap = True
-    for i, bullet in enumerate(bullets):
-        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        p.text = bullet
-        p.font.size = Pt(font_size)
-        p.font.color.rgb = text_color
-        p.space_before = Pt(spacing)
-        p.space_after = Pt(spacing)
-    return tb
-
-
-def slide_count(prs):
-    """Return the current slide count."""
-    return len(prs.slides)
-
-
-# ---------------------------------------------------------------------------
-# New helper functions for better formatting
-# ---------------------------------------------------------------------------
-
-def add_rich_textbox(slide, left, top, width, height, parts: List[Tuple[str, bool, int, RGBColor]],
-                     alignment=PP_ALIGN.LEFT, word_wrap=True):
-    """
-    Add a text box with mixed formatting.
-
-    Args:
-        parts: List of (text, bold, font_size, color) tuples
-        Example: [("Bold Title", True, 16, OT_ASH), (" — Normal", False, 16, OT_ASH)]
-    """
+def add_rich_textbox_theme(slide, left, top, width, height, text: str,
+                           font_size=14, green_color=OT_GREEN_HIGHLIGHT,
+                           alignment=PP_ALIGN.LEFT, word_wrap=True,
+                           vertical_anchor=MSO_ANCHOR.TOP,
+                           bold_base=False):
+    """Add a textbox with rich text markup, using THEME colors for base text."""
     tb = slide.shapes.add_textbox(
         Inches(left), Inches(top), Inches(width), Inches(height)
     )
     tf = tb.text_frame
     tf.word_wrap = word_wrap
+    tf.vertical_anchor = vertical_anchor
 
-    p = tf.paragraphs[0]
-    p.alignment = alignment
-
-    for text, bold, size, color in parts:
-        r = p.add_run()
-        r.text = text
-        r.font.size = Pt(size)
-        r.font.bold = bold
-        r.font.color.rgb = color
-
+    add_rich_paragraph(tf, text, font_size=font_size,
+                       use_theme_color=True,
+                       green_color=green_color,
+                       is_first=True, alignment=alignment,
+                       bold_base=bold_base)
     return tb
 
 
-def add_card(slide, left, top, width, height, title, body,
-             accent_color=OT_GREEN, dark_bg=True):
+def add_auto_shape_with_scheme_fill(slide, left, top, width, height,
+                                     scheme_color="bg2"):
+    """Add an AUTO_SHAPE (RECTANGLE) with scheme color fill.
+    Original PoC summary uses schemeClr "bg2" which maps to lt2=#D5F89E (lime).
     """
-    Add a card-style content block with colored left border, title, and body.
-
-    Uses text boxes to create a card layout with:
-    - Subtle card background (slightly lighter on dark slides)
-    - Thin colored left border (accent line)
-    - Bold title at top
-    - Body text below
-    """
-    title_color = OT_WHITE if dark_bg else OT_ASH
-    body_color = OT_LIGHT_GRAY if dark_bg else OT_ASH
-    bg = OT_CARD_BG if dark_bg else OT_VERY_LIGHT_GRAY
-
-    # Card background
-    add_textbox(slide, left, top, width, height, "",
-                font_size=1, bg_color=bg)
-
-    # Add accent line on the left
-    add_accent_line(slide, left, top, height, accent_color, thickness=Pt(4))
-
-    # Add title
-    add_textbox(slide, left + 0.2, top + 0.1, width - 0.3, 0.5, title,
-                font_size=14, bold=True, text_color=title_color, alignment=PP_ALIGN.LEFT)
-
-    # Add body text
-    add_textbox(slide, left + 0.2, top + 0.6, width - 0.3, height - 0.7, body,
-                font_size=12, text_color=body_color, alignment=PP_ALIGN.LEFT)
-
-    return slide
-
-
-def add_accent_line(slide, left, top, height, color=OT_GREEN, thickness=Pt(3)):
-    """Add a thin colored accent line (vertical)."""
-    line = slide.shapes.add_shape(
-        1,  # Line shape type
-        Inches(left), Inches(top), Inches(0.05), Inches(height)
+    shape = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(left), Inches(top), Inches(width), Inches(height)
     )
-    line.line.color.rgb = color
-    line.line.width = thickness
-    line.fill.background()
-    return line
+    # Remove default outline
+    shape.line.fill.background()
 
+    # Set scheme color fill via XML manipulation
+    spPr = shape._element.find(f'{{{NS_A}}}spPr')
+    if spPr is not None:
+        # Remove existing fill
+        for child in list(spPr):
+            tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+            if tag in ('solidFill', 'noFill', 'gradFill', 'pattFill'):
+                spPr.remove(child)
+        # Add scheme color fill
+        solidFill = etree.SubElement(spPr, f'{{{NS_A}}}solidFill')
+        schemeClr = etree.SubElement(solidFill, f'{{{NS_A}}}schemeClr')
+        schemeClr.set('val', scheme_color)
 
-def add_numbered_card(slide, left, top, width, height, number, title, description):
-    """
-    Add a numbered card with a colored badge, title, and description.
-    Useful for business value, metrics, outcomes.
-    """
-    # Number badge
-    add_textbox(slide, left, top, 0.7, 0.7, number,
-                font_size=22, bold=True, text_color=OT_WHITE,
-                bg_color=OT_GREEN, alignment=PP_ALIGN.CENTER)
-
-    # Title
-    add_textbox(slide, left + 0.85, top, width - 0.85, 0.4, title,
-                font_size=14, bold=True, text_color=OT_ASH,
-                alignment=PP_ALIGN.LEFT)
-
-    # Description
-    add_textbox(slide, left + 0.85, top + 0.45, width - 0.85, height - 0.55, description,
-                font_size=12, text_color=OT_ASH,
-                alignment=PP_ALIGN.LEFT)
-
-    return slide
-
-
-def add_icon_row(slide, left, top, width, icon, title, description,
-                 font_size=12, spacing=0.1):
-    """
-    Add a row with icon (emoji), title, and description.
-    Useful for data sources, integrations, etc.
-    """
-    # Icon
-    add_textbox(slide, left, top, 0.3, 0.4, icon,
-                font_size=20, alignment=PP_ALIGN.CENTER)
-
-    # Title + description on one line
-    text = f"{title}: {description}"
-    add_textbox(slide, left + 0.5, top, width - 0.5, 0.4, text,
-                font_size=font_size, text_color=OT_ASH, alignment=PP_ALIGN.LEFT)
-
-    return slide
-
-
-def add_bullet_paragraph(text_frame, text, bold_prefix=None, font_size=14, color=OT_ASH):
-    """
-    Add a properly formatted bullet point with optional bold prefix.
-
-    Example: add_bullet_paragraph(tf, "Description", bold_prefix="Title")
-    Creates: "Title — Description" where Title is bold.
-    """
-    p = text_frame.add_paragraph()
-    p.font.size = Pt(font_size)
-    p.font.color.rgb = color
-
-    if bold_prefix:
-        r = p.add_run()
-        r.text = f"{bold_prefix} — "
-        r.font.bold = True
-        r.font.size = Pt(font_size)
-        r.font.color.rgb = color
-
-        r = p.add_run()
-        r.text = text
-        r.font.bold = False
-        r.font.size = Pt(font_size)
-        r.font.color.rgb = color
-    else:
-        p.text = text
-
-    p.space_before = Pt(6)
-    p.space_after = Pt(6)
-    return p
-
-
-def add_speaker_notes(slide, text):
-    """Add speaker notes to a slide."""
-    notes_slide = slide.notes_slide
-    text_frame = notes_slide.notes_text_frame
-    text_frame.text = text
-
-
-def add_footer(slide, slide_num: int, copyright_text="© 2019-2026 ONE THOUSAND",
-               dark_bg=True):
-    """Add OT footer with copyright + slide number."""
-    color = OT_MID_GRAY if dark_bg else OT_ASH
-    add_textbox(slide, 0.3, 7.0, 4.0, 0.35,
-                copyright_text,
-                font_size=9, text_color=color, alignment=PP_ALIGN.LEFT)
-    add_textbox(slide, 11.5, 7.0, 1.5, 0.35,
-                str(slide_num),
-                font_size=9, text_color=color, alignment=PP_ALIGN.RIGHT)
-
-
-def set_footer(slide, slide_num, copyright_text="© 2019-2026 ONE THOUSAND",
-               dark_bg=True):
-    """Set footer using template placeholders if available, fall back to textboxes.
-
-    Also covers any inherited layout footer text (like 'CONFIDENTIAL') that
-    shows through from the layout but can't be edited via placeholders.
-    """
-    color = OT_MID_GRAY if dark_bg else OT_ASH
-    footer_ph = ph_by_idx(slide, 11)
-    num_ph = ph_by_idx(slide, 12)
-    if footer_ph and num_ph:
-        set_ph_text(footer_ph, copyright_text, size=9, color=color)
-        set_ph_text(num_ph, str(slide_num), size=9, color=color)
-    else:
-        # Textbox footer — also covers inherited layout footer text
-        # Place a wide enough box to cover any inherited "CONFIDENTIAL" etc.
-        add_textbox(slide, 0.3, 7.0, 10.0, 0.35, copyright_text,
-                    font_size=9, text_color=color, alignment=PP_ALIGN.LEFT)
-        add_textbox(slide, 11.0, 7.0, 2.0, 0.35, str(slide_num),
-                    font_size=9, text_color=color, alignment=PP_ALIGN.RIGHT)
+    return shape
 
 
 def image_placeholder(slide, left, top, width, height, description):
-    """Add a gray box with [IMAGE: ...] text as a placeholder for user images."""
+    """Add a subtle image placeholder — no heavy bg fill, just hint text."""
     add_textbox(slide, left, top, width, height,
                 f"[IMAGE: {description}]",
-                font_size=14, bg_color=OT_LIGHT_GRAY, text_color=OT_ASH,
-                alignment=PP_ALIGN.CENTER)
+                font_size=14, text_color=OT_MID_GRAY,
+                alignment=PP_ALIGN.CENTER,
+                vertical_anchor=MSO_ANCHOR.MIDDLE)
+
+
+def add_speaker_notes(slide, text):
+    notes_slide = slide.notes_slide
+    tf = notes_slide.notes_text_frame
+    tf.text = text
+
+
+def set_footer_textbox(slide, slide_num, copyright_text="© 2019-2026 ONE THOUSAND"):
+    """Add footer as textbox matching original format: center-aligned at bottom."""
+    add_textbox(slide, 4.62, 7.05, 4.09, 0.20, copyright_text,
+                font_size=8, text_color=OT_MID_GRAY,
+                alignment=PP_ALIGN.CENTER,
+                vertical_anchor=MSO_ANCHOR.TOP)
+
+
+def slide_count(prs):
+    return len(prs.slides)
+
+
+def _enable_autofit(text_frame):
+    """Enable auto-shrink text fitting — <a:normAutofit/> without fontScale."""
+    body_props = text_frame._txBody.find(f'{{{NS_A}}}bodyPr')
+    if body_props is None:
+        return
+    for child in list(body_props):
+        tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+        if tag in ('noAutofit', 'normAutofit', 'spAutoFit'):
+            body_props.remove(child)
+    etree.SubElement(body_props, f'{{{NS_A}}}normAutofit')
+
+
+def remove_shape_by_ph_idx(slide, idx):
+    """Remove a placeholder element entirely from the slide XML."""
+    ph = ph_by_idx(slide, idx)
+    if ph is not None:
+        sp = ph._element
+        sp.getparent().remove(sp)
 
 
 # ---------------------------------------------------------------------------
-# Slide creation functions
+# Slide creation functions — EXACT match to original PPTX
 # ---------------------------------------------------------------------------
 
 def make_cover(prs, client_name, location, date, use_case_title, day=1, verbose=False):
-    """
-    Cover slide using 'Cover Lime + one Logo' layout.
+    """Cover slide — 'Title Lime + one Logo' layout.
 
-    Layout has:
-      idx=10  Date placeholder
-      idx=11  Picture/logo placeholder (unused, we add image placeholder as text box)
-    Title and subtitle are added as text boxes.
+    Original formatting (from uploaded PPTX analysis):
+    - PH idx=10 REPOSITIONED to (0.29, 6.05) 3.90x0.23 — date/location
+    - PH idx=0 REPOSITIONED to (0.29, 6.41) 9.33x1.46 — TWO paragraphs
+    - PH idx=11 (picture) and PH idx=15 (text) REMOVED — not used by original
+    - PICTURE at (9.60, 6.55) — Client logo (manual, not from layout)
     """
-    layout = find_layout(prs, "Cover Lime + one Logo")
+    layout = find_layout(prs, "Title Lime + one Logo")
     if not layout:
-        return
+        layout = find_layout(prs, "Cover Lime + one Logo")
+        if not layout:
+            return
     slide = prs.slides.add_slide(layout)
 
-    # Hide the built-in logo picture placeholder (idx=11) by removing it
-    # It renders the OT logo at full size which is too large
-    logo_ph = ph_by_idx(slide, 11)
-    if logo_ph is not None:
-        sp = logo_ph._element
-        sp.getparent().remove(sp)
+    # REMOVE unused layout placeholders that cause "duplicate" appearance
+    remove_shape_by_ph_idx(slide, 11)   # Picture placeholder from layout
+    remove_shape_by_ph_idx(slide, 15)   # Text placeholder from layout
 
-    # Date placeholder
-    date_ph = ph_by_idx(slide, 10)
+    # Date/location — PH idx=10, reposition to match original
     date_text = f"{location}  |  {date}"
     if day == 2:
         date_text += "  |  Day 2"
-    set_ph_text(date_ph, date_text, size=14, color=OT_WHITE)
+    date_ph = ph_by_idx(slide, 10)
+    if date_ph:
+        reposition_shape(date_ph, left=0.29, top=6.05, width=3.90, height=0.23)
+        set_ph_text_theme(date_ph, date_text)
+    else:
+        # Fallback: create textbox if PH 10 not in layout
+        add_textbox_theme(slide, 0.29, 6.05, 3.90, 0.23, date_text,
+                          font_size=10, alignment=PP_ALIGN.LEFT)
 
-    # Title as text box (large, white, positioned in lower-center area)
-    title_text = f"Strengthening {client_name} With AI"
-    add_textbox(slide, 0.8, 3.5, 11.5, 1.5, title_text,
-                font_size=44, text_color=OT_WHITE, bold=True,
-                alignment=PP_ALIGN.LEFT)
+    # Title — PH idx=0, reposition to match original (0.29, 6.41) 9.33x1.46
+    title_ph = ph_by_idx(slide, 0)
+    if title_ph:
+        reposition_shape(title_ph, left=0.29, top=6.41, width=9.33, height=1.46)
+        if title_ph.has_text_frame:
+            tf = title_ph.text_frame
+            tf.clear()
+            # Paragraph 1: Title — 32pt bold, theme color
+            p1 = tf.paragraphs[0]
+            r1 = p1.add_run()
+            r1.text = f"Strengthening {client_name} With AI"
+            r1.font.size = Pt(32)
+            r1.font.bold = True
 
-    # Subtitle as text box
-    subtitle_text = f"AI Hackathon | {use_case_title}"
-    add_textbox(slide, 0.8, 5.2, 11.5, 0.8, subtitle_text,
-                font_size=20, text_color=OT_WHITE,
-                alignment=PP_ALIGN.LEFT)
+            # Paragraph 2: Subtitle — 32pt NOT bold, theme color
+            p2 = tf.add_paragraph()
+            r2 = p2.add_run()
+            r2.text = f"AI Hackathon | {use_case_title}"
+            r2.font.size = Pt(32)
+            r2.font.bold = False
 
-    # Client logo placeholder (top-right, smaller)
-    image_placeholder(slide, 9.5, 0.5, 3.3, 1.8, "Add client logo here")
+    # Client logo placeholder at bottom-right
+    image_placeholder(slide, 9.60, 6.55, 4.18, 0.84, "Client logo")
 
     if verbose:
         logger.info(f"Created Day {day} cover slide")
 
 
 def make_checkin(prs, questions, client_name, verbose=False):
-    """
-    Check-in slide using 'Bullet Points Ash' layout.
+    """Check-in slide — 'Bullet Points Ash' layout.
 
-    Layout placeholders:
-      idx=0   Title ("CHECK-IN")
-      idx=1   Subtitle
-      idx=27  Emoji left (🧠)
-      idx=36  Headline left
-      idx=42  Text left
-      idx=46  Emoji right
-      idx=44  Headline right
-      idx=45  Text right
-      idx=11  Footer
-      idx=12  Slide number
+    Original formatting:
+    - PH idx=0 REPOSITIONED to (0.44, 6.26) 10.02x0.91 — "Check-in" at 66pt, BOTTOM
+    - TEXT_BOX at (4.53, 1.28) 8.62x0.81 — Questions at 32pt, theme color
+    - ALL emoji placeholders REMOVED entirely
     """
     layout = find_layout(prs, "Bullet Points Ash")
     if not layout:
@@ -418,661 +423,778 @@ def make_checkin(prs, questions, client_name, verbose=False):
 
     questions = [q.replace("{client_name}", client_name) for q in questions]
 
-    # Title
-    set_ph_text(ph_by_idx(slide, 0), "CHECK-IN", size=44, bold=True)
+    # Remove ALL emoji placeholders (idx=27, 46, 47)
+    for emoji_idx in [27, 46, 47]:
+        remove_shape_by_ph_idx(slide, emoji_idx)
 
-    # Clear subtitle
-    set_ph_text(ph_by_idx(slide, 1), "")
+    # Clear unused column placeholders
+    for idx in [1, 36, 42, 44, 45]:
+        ph = ph_by_idx(slide, idx)
+        if ph:
+            remove_shape_by_ph_idx(slide, idx)
 
-    # Left column: brain emoji + first question
-    set_ph_text(ph_by_idx(slide, 27), "🧠")
-    if len(questions) > 0:
-        set_ph_text(ph_by_idx(slide, 36), questions[0])
-    set_ph_text(ph_by_idx(slide, 42), "")
+    # PH idx=0 — Reposition to BOTTOM of slide, 66pt, Wavetable font
+    title_ph = ph_by_idx(slide, 0)
+    if title_ph:
+        reposition_shape(title_ph, left=0.44, top=6.26, width=10.02, height=0.91)
+        if title_ph.has_text_frame:
+            tf = title_ph.text_frame
+            tf.clear()
+            p = tf.paragraphs[0]
+            r = p.add_run()
+            r.text = "Check-in"
+            r.font.size = Pt(66)
+            r.font.name = "Wavetable"
 
-    # Right column: thinking emoji + second/third questions
-    set_ph_text(ph_by_idx(slide, 46), "💭")
-    if len(questions) > 1:
-        set_ph_text(ph_by_idx(slide, 44), questions[1])
-    if len(questions) > 2:
-        set_ph_text(ph_by_idx(slide, 45), questions[2])
-    else:
-        set_ph_text(ph_by_idx(slide, 45), "")
+    # Questions — single TEXT_BOX at (4.53, 1.28) 8.62x0.81
+    # EXPLICIT white needed: textboxes don't inherit theme on dark Ash bg
+    if questions:
+        tb = slide.shapes.add_textbox(
+            Inches(4.53), Inches(1.28), Inches(8.62), Inches(0.81)
+        )
+        tf = tb.text_frame
+        tf.word_wrap = True
+        tf.vertical_anchor = MSO_ANCHOR.TOP
+        _enable_autofit(tf)
+        for i, q in enumerate(questions):
+            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+            r = p.add_run()
+            r.text = q
+            r.font.size = Pt(32)
+            r.font.color.rgb = OT_WHITE  # Explicit white on dark bg
 
-    # Clear idx=47 if it exists (overlapping placeholder)
-    set_ph_text(ph_by_idx(slide, 47), "")
-
-    set_footer(slide, slide_count(prs))
-
-    # Add speaker notes
-    notes_text = "Engage the team with check-in questions. Listen to their concerns and expectations."
-    add_speaker_notes(slide, notes_text)
-
+    set_footer_textbox(slide, slide_count(prs))
+    add_speaker_notes(slide, "Engage the team with check-in questions.")
     if verbose:
         logger.info("Created Check-in slide")
 
 
 def make_agenda(prs, agenda_data, verbose=False):
-    """
-    Agenda slide — uses 'Dayline Lime' layout with grid placeholders.
-
-    Reads from agenda_data which can have custom_items or day1/day2 arrays.
-    If no custom items, generates a default schedule by filling grid placeholders.
-    """
+    """Agenda slide — 'Dayline Lime' layout."""
     layout = find_layout(prs, "Dayline Lime")
     if not layout:
         return
     slide = prs.slides.add_slide(layout)
 
-    # Title (idx=0)
-    set_ph_text(ph_by_idx(slide, 0), "AI Hackathon – Agenda", size=36, bold=True)
-
-    # Subtitle (idx=1)
+    set_ph_text_theme(ph_by_idx(slide, 0), "AI Hackathon – Agenda", size=36, bold=True)
     set_ph_text(ph_by_idx(slide, 1), "")
+    set_ph_text_theme(ph_by_idx(slide, 21), "Day 1")
+    set_ph_text_theme(ph_by_idx(slide, 121), "Day 2")
 
-    # Day headers
-    set_ph_text(ph_by_idx(slide, 21), "Day 1")
-    set_ph_text(ph_by_idx(slide, 121), "Day 2")
+    day1 = agenda_data.get("day1", [])
+    day2 = agenda_data.get("day2", [])
 
-    # Get schedules — support both day1/day2 arrays and custom_items format
-    day1_schedule = agenda_data.get("day1", [])
-    day2_schedule = agenda_data.get("day2", [])
-
-    # Parse custom_items if day1/day2 not provided
-    if not day1_schedule and not day2_schedule:
-        custom_items = agenda_data.get("custom_items", [])
-        for item in custom_items:
-            day_label = item.get("day", "").lower()
-            entry = {"time": item.get("time", ""), "activity": item.get("activity", "")}
-            if "1" in day_label:
-                day1_schedule.append(entry)
-            elif "2" in day_label:
-                day2_schedule.append(entry)
-
-    # Default Day 1 schedule (time, activity pairs)
-    if not day1_schedule:
-        day1_schedule = [
-            {"time": "08:00", "activity": "Check-In + Introduction"},
-            {"time": "09:00", "activity": "Process Flow + Framing"},
-            {"time": "10:00", "activity": "Workstream: AI Modelling"},
-            {"time": "12:00", "activity": "Lunch Break"},
-            {"time": "13:00", "activity": "Workstream: Application"},
-            {"time": "17:00", "activity": "Check Out"},
-        ]
-
-    # Default Day 2 schedule
-    if not day2_schedule:
-        day2_schedule = [
-            {"time": "08:00", "activity": "Check-in + Feedback"},
-            {"time": "09:00", "activity": "Workstreams"},
-            {"time": "12:00", "activity": "Working Lunch"},
-            {"time": "13:00", "activity": "Final Prep"},
-            {"time": "14:00", "activity": "Presentations"},
-            {"time": "16:00", "activity": "Wrap-up"},
-        ]
-
-    # Fill Day 1 grid (limit to first 3 time slots to avoid overflow)
-    day1_grid_indices = [
-        (97, 107, 108),   # Row 1: time, activity1, activity2
-        (66, 115, 116),   # Row 2
-        (66, 117, 118),   # Row 3 (reuse time)
-    ]
-    for row_idx, (time_idx, act1_idx, act2_idx) in enumerate(day1_grid_indices):
-        if row_idx < len(day1_schedule):
-            item = day1_schedule[row_idx]
-            time = item.get("time", "")
-            activity = item.get("activity", "")
-            set_ph_text(ph_by_idx(slide, time_idx), time)
-            set_ph_text(ph_by_idx(slide, act1_idx), activity)
-            set_ph_text(ph_by_idx(slide, act2_idx), "")
+    # Day 1 grid
+    d1_grid = [(97, 107, 108), (66, 115, 116), (66, 117, 118)]
+    for row_idx, (t_idx, a1_idx, a2_idx) in enumerate(d1_grid):
+        if row_idx < len(day1):
+            set_ph_text_theme(ph_by_idx(slide, t_idx), day1[row_idx].get("time", ""))
+            set_ph_text_theme(ph_by_idx(slide, a1_idx), day1[row_idx].get("activity", ""))
+            set_ph_text(ph_by_idx(slide, a2_idx), "")
         else:
-            set_ph_text(ph_by_idx(slide, time_idx), "")
-            set_ph_text(ph_by_idx(slide, act1_idx), "")
-            set_ph_text(ph_by_idx(slide, act2_idx), "")
+            set_ph_text(ph_by_idx(slide, t_idx), "")
+            set_ph_text(ph_by_idx(slide, a1_idx), "")
+            set_ph_text(ph_by_idx(slide, a2_idx), "")
 
-    # Clear remaining Day 1 cells to avoid template text showing
-    remaining_day1_indices = [109, 110, 111, 112, 113, 114, 119, 120]
-    for idx in remaining_day1_indices:
+    for idx in [109, 110, 111, 112, 113, 114, 119, 120]:
         set_ph_text(ph_by_idx(slide, idx), "")
 
-    # Fill Day 2 grid
-    day2_grid_indices = [
-        (122, 124, 125),  # Row 1
-        (123, 132, 138),  # Row 2
-    ]
-    for row_idx, (time_idx, act1_idx, act2_idx) in enumerate(day2_grid_indices):
-        if row_idx < len(day2_schedule):
-            item = day2_schedule[row_idx]
-            time = item.get("time", "")
-            activity = item.get("activity", "")
-            set_ph_text(ph_by_idx(slide, time_idx), time)
-            set_ph_text(ph_by_idx(slide, act1_idx), activity)
-            set_ph_text(ph_by_idx(slide, act2_idx), "")
+    d2_grid = [(122, 124, 125), (123, 132, 138)]
+    for row_idx, (t_idx, a1_idx, a2_idx) in enumerate(d2_grid):
+        if row_idx < len(day2):
+            set_ph_text_theme(ph_by_idx(slide, t_idx), day2[row_idx].get("time", ""))
+            set_ph_text_theme(ph_by_idx(slide, a1_idx), day2[row_idx].get("activity", ""))
+            set_ph_text(ph_by_idx(slide, a2_idx), "")
         else:
-            set_ph_text(ph_by_idx(slide, time_idx), "")
-            set_ph_text(ph_by_idx(slide, act1_idx), "")
-            set_ph_text(ph_by_idx(slide, act2_idx), "")
+            set_ph_text(ph_by_idx(slide, t_idx), "")
+            set_ph_text(ph_by_idx(slide, a1_idx), "")
+            set_ph_text(ph_by_idx(slide, a2_idx), "")
 
-    # Clear remaining Day 2 cells
-    remaining_day2_indices = [126, 129, 130, 131, 134, 135, 136]
-    for idx in remaining_day2_indices:
+    for idx in [126, 129, 130, 131, 134, 135, 136]:
         set_ph_text(ph_by_idx(slide, idx), "")
 
-    # Clear source text (idx=22)
     set_ph_text(ph_by_idx(slide, 22), "")
-
-    set_footer(slide, slide_count(prs), dark_bg=False)
     if verbose:
         logger.info("Created Agenda slide")
 
 
-def make_toc(prs, num_items=5, verbose=False):
-    """
-    Table of Contents slide with 4 main items using template placeholders.
+def make_toc(prs, verbose=False):
+    """Table of Contents — 'Table of Contents large' layout.
 
-    Uses 'Table of Contents large' layout:
-      Row 1 Left:  idx=37 (number), idx=36 (headline), idx=38 (arrow)
-      Row 1 Right: idx=40 (number), idx=39 (headline), idx=41 (arrow)
-      Row 2 Left:  idx=20 (number), idx=19 (headline), idx=21 (arrow)
-      Row 2 Right: idx=32 (number), idx=31 (headline), idx=33 (arrow)
-      Descriptions: idx=42, 43, 34, 35 (cleared)
-      Title: idx=0
-      Footer: idx=11, Slide number: idx=12
+    Original keeps only: number PHs (37,40,20,32) and title PHs (36,39,19,31).
+    Arrow PHs (38,41,21,33) and description PHs (34,35,42,43) are REMOVED.
     """
     layout = find_layout(prs, "Table of Contents large")
     if not layout:
         return
     slide = prs.slides.add_slide(layout)
 
-    # Clear title
+    # Clear title PH
     set_ph_text(ph_by_idx(slide, 0), "")
 
-    items = [
-        ("01", "Pain"),
-        ("02", "Data"),
-        ("03", "Approach"),
-        ("04", "Challenges"),
-    ]
+    # Fill TOC items — (number_idx, title_idx)
+    items = [("01", "Pain", 37, 36), ("02", "Data", 40, 39),
+             ("03", "APPROACH", 20, 19), ("04", "Challenges", 32, 31)]
 
-    # Fill the 4 main number/headline/arrow slots
-    slot_mapping = [
-        (37, 36, 38),  # Row 1 Left
-        (40, 39, 41),  # Row 1 Right
-        (20, 19, 21),  # Row 2 Left
-        (32, 31, 33),  # Row 2 Right
-    ]
+    for num, title, n_idx, h_idx in items:
+        set_ph_text_theme(ph_by_idx(slide, n_idx), num)
+        set_ph_text_theme(ph_by_idx(slide, h_idx), title)
 
-    for i, (num, title) in enumerate(items):
-        if i < len(slot_mapping):
-            num_idx, headline_idx, arrow_idx = slot_mapping[i]
-            set_ph_text(ph_by_idx(slide, num_idx), num)
-            set_ph_text(ph_by_idx(slide, headline_idx), title)
-            set_ph_text(ph_by_idx(slide, arrow_idx), "→")
+    # REMOVE arrow placeholders entirely (not in original)
+    for idx in [38, 41, 21, 33]:
+        remove_shape_by_ph_idx(slide, idx)
 
-    # Clear description boxes
-    for idx in [42, 43, 34, 35]:
-        set_ph_text(ph_by_idx(slide, idx), "")
+    # REMOVE description area placeholders entirely (empty in original)
+    for idx in [34, 35, 42, 43]:
+        remove_shape_by_ph_idx(slide, idx)
 
-    set_footer(slide, slide_count(prs))
+    set_footer_textbox(slide, slide_count(prs))
     if verbose:
-        logger.info("Created Table of Contents slide")
+        logger.info("Created TOC slide")
 
 
-def make_chapter(prs, number, title, bullets, verbose=False):
-    """
-    Chapter Divider slide (Pain/Data/Approach/Challenges/Next Steps).
+def make_pain(prs, bullets, verbose=False):
+    """Pain slide — 'Chapter Divider Ash + Text' layout.
 
-    Uses 'Chapter Divider Ash + Text' layout:
-      idx=0   Title
-      idx=14  Number area
-      idx=15  Content text
-      idx=11  Footer
-      idx=12  Slide number
+    Original formatting:
+    - PH idx=14 — "01" inherited theme
+    - PH idx=0 — "Pain" inherited theme (default position)
+    - TEXT_BOX (NOT PH!) at (4.26, 3.23) 8.70x3.49 — 18pt with #00B050 green highlights
+    - Footer TEXT_BOX at (4.62, 7.05) center-aligned
     """
     layout = find_layout(prs, "Chapter Divider Ash + Text")
     if not layout:
         return
     slide = prs.slides.add_slide(layout)
 
-    # Title (idx=0)
-    set_ph_text(ph_by_idx(slide, 0), title, size=40, bold=True)
+    # PH idx=14 — chapter number "01", theme color
+    set_ph_text_theme(ph_by_idx(slide, 14), "01")
 
-    # Number (idx=14)
-    if number:
-        set_ph_text(ph_by_idx(slide, 14), number, size=72, bold=True, color=OT_GREEN)
+    # PH idx=0 — chapter title "Pain", theme color
+    set_ph_text_theme(ph_by_idx(slide, 0), "Pain")
 
-    # Content bullets (idx=15) — scale font if many bullets
-    content_ph = ph_by_idx(slide, 15)
-    if content_ph and content_ph.has_text_frame:
-        tf = content_ph.text_frame
-        tf.clear()
-        # Reduce font size for many/long bullets to prevent overflow
-        total_chars = sum(len(b) for b in bullets)
-        if total_chars > 400 or len(bullets) > 4:
-            font_sz = 11
-            spacing = 5
-        else:
-            font_sz = 13
-            spacing = 8
-        for i, bullet in enumerate(bullets):
-            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-            p.text = bullet
-            p.font.size = Pt(font_sz)
-            p.font.color.rgb = OT_WHITE
-            p.space_before = Pt(spacing)
-            p.space_after = Pt(spacing)
+    # Remove the default PH idx=15 — we use a manual TEXT_BOX instead
+    remove_shape_by_ph_idx(slide, 15)
 
-    # Footer + slide number via placeholders
-    set_ph_text(ph_by_idx(slide, 11), "© 2019-2026 ONE THOUSAND", size=9)
-    set_ph_text(ph_by_idx(slide, 12), str(slide_count(prs)), size=9)
+    # Content — manual TEXT_BOX at exact original position
+    # EXPLICIT white needed: textboxes don't inherit theme on dark Ash bg
+    tb = slide.shapes.add_textbox(
+        Inches(4.26), Inches(3.23), Inches(8.70), Inches(3.49)
+    )
+    tf = tb.text_frame
+    tf.word_wrap = True
+    tf.vertical_anchor = MSO_ANCHOR.TOP
 
+    for i, bullet in enumerate(bullets):
+        add_rich_paragraph(tf, bullet, font_size=18,
+                           use_theme_color=False,
+                           explicit_color=OT_WHITE,
+                           green_color=OT_GREEN_HIGHLIGHT,
+                           spacing_before=4, spacing_after=4,
+                           is_first=(i == 0),
+                           alignment=PP_ALIGN.LEFT)
+
+    set_footer_textbox(slide, slide_count(prs))
     if verbose:
-        logger.info(f"Created chapter: {number} — {title}")
+        logger.info("Created Pain slide")
+
+
+def make_data(prs, bullets, verbose=False):
+    """Data slide — 'Chapter Divider Ash + Text' layout.
+
+    Original formatting:
+    - PH idx=14 — "02" theme
+    - PH idx=0 — "Data" theme
+    - PH idx=15 RESIZED to (4.15, 3.39) 8.70x2.76 — 18pt theme, bold prefixes
+    """
+    layout = find_layout(prs, "Chapter Divider Ash + Text")
+    if not layout:
+        return
+    slide = prs.slides.add_slide(layout)
+
+    set_ph_text_theme(ph_by_idx(slide, 14), "02")
+    set_ph_text_theme(ph_by_idx(slide, 0), "Data")
+
+    # Resize PH idx=15 to match original
+    content_ph = ph_by_idx(slide, 15)
+    if content_ph:
+        reposition_shape(content_ph, left=4.15, top=3.39, width=8.70, height=2.76)
+        if content_ph.has_text_frame:
+            tf = content_ph.text_frame
+            tf.clear()
+            tf.vertical_anchor = MSO_ANCHOR.TOP
+            _enable_autofit(tf)
+
+            # Original uses: " " + "Bold title: " accent2 + "description" theme
+            for i, bullet in enumerate(bullets):
+                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                p.space_before = Pt(4)
+                p.space_after = Pt(4)
+                p.alignment = PP_ALIGN.LEFT
+                # Parse **bold** markup
+                segments = _parse_rich_segments(bullet)
+                # Leading space like original
+                r_sp = p.add_run()
+                r_sp.text = " "
+                r_sp.font.size = Pt(18)
+                for seg_text, style in segments:
+                    r = p.add_run()
+                    r.text = seg_text
+                    r.font.size = Pt(18)
+                    if style == 'bold':
+                        r.font.bold = True
+                        _set_run_scheme_color(r, "accent2")  # Green accent
+                    elif style == 'green':
+                        r.font.color.rgb = OT_GREEN_HIGHLIGHT
+                    # else: theme color (inherited white on dark bg)
+
+    set_footer_textbox(slide, slide_count(prs))
+    if verbose:
+        logger.info("Created Data slide")
 
 
 def make_data_screenshots(prs, verbose=False):
-    """
-    Data screenshots slide — uses 'Title Ash + small Image' layout.
-
-    Layout:
-      idx=0   Title
-      idx=15  Picture placeholder
-      idx=31  Text (Client Name)
-      idx=32  Small text
-      idx=11  Footer
-      idx=12  Slide number
-    """
+    """Data screenshots slide — 'Title Ash + small Image' layout."""
     layout = find_layout(prs, "Title Ash + small Image")
     if not layout:
         return
     slide = prs.slides.add_slide(layout)
 
-    # Title (idx=0)
-    set_ph_text(ph_by_idx(slide, 0), "Data Screenshots")
-
-    # Small text (idx=32) — describe what to add
-    set_ph_text(ph_by_idx(slide, 32), "Sample data files: emails, PDFs, spreadsheets")
-
-    # Clear client name (idx=31)
+    set_ph_text_theme(ph_by_idx(slide, 0), "Data Screenshots", size=24)
+    set_ph_text_theme(ph_by_idx(slide, 32), "Sample data files: emails, PDFs, spreadsheets", size=12)
     set_ph_text(ph_by_idx(slide, 31), "")
 
-    # Picture placeholder (idx=15) — user will replace with actual screenshot
-    # (No action needed, it's a built-in picture placeholder)
-
-    set_footer(slide, slide_count(prs))
+    set_footer_textbox(slide, slide_count(prs))
     if verbose:
         logger.info("Created Data Screenshots slide")
 
 
-def make_system_landscape(prs, landscape_data, verbose=False):
-    """
-    NEW: System Landscape slide showing ERP, CRM, Cloud, APIs.
+def make_approach(prs, bullets, verbose=False):
+    """Approach slide — 'Chapter Divider Ash + Text' layout.
 
-    Uses DEFAULT layout (no placeholders) with card-based layout.
+    Original formatting:
+    - PH idx=14 — "03" theme
+    - PH idx=0 RESIZED to (0.29, 3.27) 3.67x0.66 — "APPROACH" at 48pt theme
+    - PH idx=15 RESIZED to (4.35, 3.11) 8.90x3.88 — 16pt, anchor=t, LEFT, bold prefixes
     """
-    layout = find_layout(prs, "DEFAULT")
+    layout = find_layout(prs, "Chapter Divider Ash + Text")
     if not layout:
         return
     slide = prs.slides.add_slide(layout)
 
-    # Title
-    add_textbox(slide, 0.5, 0.3, 12.0, 0.7, "SYSTEM LANDSCAPE",
-                font_size=24, bold=True, text_color=OT_WHITE,
-                alignment=PP_ALIGN.LEFT)
+    set_ph_text_theme(ph_by_idx(slide, 14), "03")
 
-    # Accent line
-    add_accent_line(slide, 0.5, 1.1, 0.08, OT_GREEN, thickness=Pt(3))
+    # Title — resize and set 48pt
+    title_ph = ph_by_idx(slide, 0)
+    if title_ph:
+        reposition_shape(title_ph, left=0.29, top=3.27, width=3.67, height=0.66)
+        set_ph_text_theme(title_ph, "APPROACH", size=48)
 
-    # Extract data from landscape_data
-    erp = landscape_data.get("erp", "ERP System")
-    crm = landscape_data.get("crm", "CRM System")
-    cloud = landscape_data.get("cloud_infra", "Cloud Infrastructure")
-    key_apis = landscape_data.get("key_apis", [])
-    integrations = landscape_data.get("integrations", "")
-    constraints = landscape_data.get("constraints_or_notes", "")
+    # Content — resize PH idx=15
+    content_ph = ph_by_idx(slide, 15)
+    if content_ph:
+        reposition_shape(content_ph, left=4.35, top=3.11, width=8.90, height=3.88)
+        if content_ph.has_text_frame:
+            tf = content_ph.text_frame
+            tf.clear()
+            tf.vertical_anchor = MSO_ANCHOR.TOP
+            _enable_autofit(tf)
 
-    # Create 2x2 card layout for ERP, CRM, Cloud, and Integrations
-    # Row 1: ERP (left), CRM (right)
-    add_card(slide, 0.5, 1.5, 5.8, 1.5, "ERP System", erp, OT_GREEN, dark_bg=True)
-    add_card(slide, 6.8, 1.5, 5.8, 1.5, "CRM System", crm, OT_GREEN, dark_bg=True)
+            # Original: bold titles in ACCENT_2, descriptions in theme,
+            # last item (question) uses BACKGROUND_2 for bold
+            for i, bullet in enumerate(bullets):
+                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                p.space_before = Pt(7.5)
+                p.alignment = PP_ALIGN.LEFT
+                is_question = (i == len(bullets) - 1)  # Last item is the question
+                segments = _parse_rich_segments(bullet)
+                for seg_text, style in segments:
+                    r = p.add_run()
+                    r.text = seg_text
+                    r.font.size = Pt(16)
+                    if style == 'bold':
+                        r.font.bold = True
+                        if is_question:
+                            _set_run_scheme_color(r, "bg2")  # Lime for question
+                        else:
+                            _set_run_scheme_color(r, "accent2")  # Green accent
+                    elif style == 'green':
+                        r.font.color.rgb = OT_GREEN_HIGHLIGHT
+                    else:
+                        if is_question:
+                            # Question description also uses bg2
+                            pass  # theme inherited
+                        # else: theme color (inherited)
 
-    # Row 2: Cloud (left), APIs/Integrations (right)
-    add_card(slide, 0.5, 3.3, 5.8, 1.5, "Cloud Infrastructure", cloud, OT_GREEN, dark_bg=True)
-
-    # APIs list
-    apis_text = "\n".join([f"• {api}" for api in key_apis[:5]])
-    add_card(slide, 6.8, 3.3, 5.8, 1.5, "Key APIs", apis_text, OT_GREEN, dark_bg=True)
-
-    # Integrations and constraints at bottom
-    integration_info = f"Integrations: {integrations}\n\nConstraints: {constraints}"
-    add_textbox(slide, 0.5, 5.1, 12.0, 1.5, integration_info,
-                font_size=11, text_color=OT_ASH, alignment=PP_ALIGN.LEFT,
-                bg_color=OT_VERY_LIGHT_GRAY)
-
-    add_footer(slide, slide_count(prs))
+    set_footer_textbox(slide, slide_count(prs))
     if verbose:
-        logger.info("Created System Landscape slide")
+        logger.info("Created Approach slide")
 
 
-def make_key_metrics(prs, metrics_data, verbose=False):
+def make_challenges(prs, bullets, verbose=False):
+    """Challenges slide — 'Chapter Divider Ash + Text' layout.
+
+    Original formatting:
+    - PH idx=14 — "04" theme
+    - PH idx=0 RESIZED to (0.29, 3.27) 4.46x0.66 — "Challenges" at 48pt theme
+    - PH idx=15 RESIZED to (4.76, 3.27) 7.91x3.65 — 14pt, anchor=t, bold prefixes
     """
-    NEW: Key Metrics slide showing PoC Scope, Timeline to Live, Estimated ROI.
-
-    Uses DEFAULT layout with large stat callouts.
-    """
-    layout = find_layout(prs, "DEFAULT")
+    layout = find_layout(prs, "Chapter Divider Ash + Text")
     if not layout:
         return
     slide = prs.slides.add_slide(layout)
 
-    # Title
-    add_textbox(slide, 0.5, 0.3, 12.0, 0.7, "KEY METRICS",
-                font_size=24, bold=True, text_color=OT_WHITE,
-                alignment=PP_ALIGN.LEFT)
+    set_ph_text_theme(ph_by_idx(slide, 14), "04")
 
-    # Accent line
-    add_accent_line(slide, 0.5, 1.1, 0.08, OT_GREEN, thickness=Pt(3))
+    title_ph = ph_by_idx(slide, 0)
+    if title_ph:
+        reposition_shape(title_ph, left=0.29, top=3.27, width=4.46, height=0.66)
+        set_ph_text_theme(title_ph, "Challenges", size=48)
 
-    # Extract metric data
-    poc_scope = metrics_data.get("poc_scope", "")
-    timeline = metrics_data.get("timeline_to_live", "")
-    roi = metrics_data.get("estimated_roi", "")
+    content_ph = ph_by_idx(slide, 15)
+    if content_ph:
+        reposition_shape(content_ph, left=4.76, top=3.27, width=7.91, height=3.65)
+        if content_ph.has_text_frame:
+            tf = content_ph.text_frame
+            tf.clear()
+            tf.vertical_anchor = MSO_ANCHOR.TOP
+            _enable_autofit(tf)
 
-    # Create 3-column layout for metrics
-    add_card(slide, 0.5, 1.5, 3.8, 4.5, "PoC Scope", poc_scope, OT_GREEN, dark_bg=True)
-    add_card(slide, 4.6, 1.5, 3.8, 4.5, "Timeline to Live", timeline, OT_GREEN, dark_bg=True)
-    add_card(slide, 8.7, 1.5, 3.8, 4.5, "Estimated ROI", roi, OT_GREEN, dark_bg=True)
+            # Original: bold titles in ACCENT_2, " " spacer, description in theme
+            for i, bullet in enumerate(bullets):
+                p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                p.space_before = Pt(7.5)
+                p.alignment = PP_ALIGN.LEFT
+                segments = _parse_rich_segments(bullet)
+                for seg_text, style in segments:
+                    r = p.add_run()
+                    r.text = seg_text
+                    r.font.size = Pt(14)
+                    if style == 'bold':
+                        r.font.bold = True
+                        _set_run_scheme_color(r, "accent2")  # Green accent
+                    elif style == 'green':
+                        r.font.color.rgb = OT_GREEN_HIGHLIGHT
+                    # else: theme color (inherited)
 
-    add_footer(slide, slide_count(prs))
+    set_footer_textbox(slide, slide_count(prs))
     if verbose:
-        logger.info("Created Key Metrics slide")
-
-
-def make_lessons_learned(prs, lessons, verbose=False):
-    """
-    NEW: Lessons Learned slide with structured insights.
-
-    Uses DEFAULT layout.
-    """
-    layout = find_layout(prs, "DEFAULT")
-    if not layout:
-        return
-    slide = prs.slides.add_slide(layout)
-
-    # Title
-    add_textbox(slide, 0.5, 0.3, 12.0, 0.7, "LESSONS LEARNED",
-                font_size=24, bold=True, text_color=OT_WHITE,
-                alignment=PP_ALIGN.LEFT)
-
-    # Accent line
-    add_accent_line(slide, 0.5, 1.1, 0.08, OT_GREEN, thickness=Pt(3))
-
-    # Create text box for lessons with bullet points
-    lessons_text = "\n\n".join([f"• {lesson}" for lesson in lessons[:8]])  # Limit to 8 lessons
-    add_textbox(slide, 0.8, 1.5, 11.5, 5.0, lessons_text,
-                font_size=13, text_color=OT_LIGHT_GRAY, alignment=PP_ALIGN.LEFT,
-                vertical_anchor=MSO_ANCHOR.TOP)
-
-    add_footer(slide, slide_count(prs))
-    if verbose:
-        logger.info("Created Lessons Learned slide")
+        logger.info("Created Challenges slide")
 
 
 def make_divider(prs, title, verbose=False):
-    """
-    Green chapter divider (Breakthrough, Demo, etc.).
-
-    Uses 'Chapter Divider Lime' layout:
-      idx=0   Title
-      idx=14  Number text (clear)
-      idx=32  Small text (clear)
-      idx=11  Footer
-      idx=12  Slide number
-    """
+    """Green chapter divider — 'Chapter Divider Lime' layout."""
     layout = find_layout(prs, "Chapter Divider Lime")
     if not layout:
         return
     slide = prs.slides.add_slide(layout)
 
-    # Title (idx=0)
-    set_ph_text(ph_by_idx(slide, 0), title, size=44, bold=True)
-
-    # Clear number text (idx=14)
+    set_ph_text_theme(ph_by_idx(slide, 0), title, size=44, bold=True)
     set_ph_text(ph_by_idx(slide, 14), "")
-
-    # Clear small text (idx=32)
     set_ph_text(ph_by_idx(slide, 32), "")
 
-    set_footer(slide, slide_count(prs), dark_bg=False)
     if verbose:
         logger.info(f"Created divider: {title}")
 
 
-def make_business_value(prs, values, verbose=False):
-    """
-    Business value slide with 3 numbered outcomes.
+def make_process_flow(prs, verbose=False):
+    """Process Flow slide — DEFAULT layout.
 
-    Uses 'Table of Contents small' layout:
-      idx=0   Title
-      Row 1:  idx=14 (number), idx=13 (headline), idx=17 (arrow)
-      Row 2:  idx=16 (number), idx=15 (headline), idx=18 (arrow)
-      Row 3:  idx=20 (number), idx=19 (headline), idx=21 (arrow)
-      idx=11  Footer
-      idx=12  Slide number
+    Original formatting:
+    - TEXT_BOX at (0.23, 0.65) 12.82x1.35 — "WE DISCUSSED THE PROCESS FLOW" 40pt THEME color
+    - PICTURES below for user to add
+    """
+    layout = find_layout(prs, "DEFAULT")
+    if not layout:
+        return
+    slide = prs.slides.add_slide(layout)
+
+    # Title — 40pt, EXPLICIT white (textboxes on dark DEFAULT bg need explicit color)
+    add_textbox(slide, 0.23, 0.65, 12.82, 1.35,
+                "WE DISCUSSED THE PROCESS FLOW",
+                font_size=40, text_color=OT_WHITE, bold=False,
+                alignment=PP_ALIGN.LEFT,
+                vertical_anchor=MSO_ANCHOR.TOP)
+
+    # Image placeholder
+    image_placeholder(slide, 0.5, 2.5, 12.0, 4.5,
+                      "Add process flow diagram (from whiteboard / Miro)")
+
+    set_footer_textbox(slide, slide_count(prs))
+    if verbose:
+        logger.info("Created Process Flow slide")
+
+
+def make_architecture(prs, verbose=False):
+    """Architecture slide — DEFAULT layout.
+
+    Original formatting:
+    - TEXT_BOX at (0.46, 0.85) 6.21x2.42 — "WE'VE SET UP AN INITIAL ARCHITECTURE" 50pt THEME color
+    - Image area for architecture diagram
+    """
+    layout = find_layout(prs, "DEFAULT")
+    if not layout:
+        return
+    slide = prs.slides.add_slide(layout)
+
+    # Title — 50pt, EXPLICIT white (textboxes on dark DEFAULT bg)
+    add_textbox(slide, 0.46, 0.85, 6.21, 2.42,
+                "WE'VE SET UP AN INITIAL ARCHITECTURE",
+                font_size=50, text_color=OT_WHITE, bold=False,
+                alignment=PP_ALIGN.LEFT,
+                vertical_anchor=MSO_ANCHOR.TOP)
+
+    # Image placeholder
+    image_placeholder(slide, 0.5, 3.5, 12.0, 3.5,
+                      "Add architecture diagram (from Miro / whiteboard)")
+
+    set_footer_textbox(slide, slide_count(prs))
+    if verbose:
+        logger.info("Created Architecture slide")
+
+
+def make_business_value(prs, bv_data, verbose=False):
+    """Business value slide — 'Table of Contents small' layout.
+
+    Original formatting:
+    - TEXT_BOX (NOT PH!) at (0.23, 1.21) 12.82x1.35 — Title 20pt theme
+    - PH idx=13 anchor=ctr — item 1: 16pt bold title + 16pt description, theme
+    - PH idx=15 anchor=ctr — item 2
+    - PH idx=19 anchor=ctr — item 3
+    - PH idx=14, 16, 20 — Numbers "01", "02", "03"
     """
     layout = find_layout(prs, "Table of Contents small")
     if not layout:
         return
     slide = prs.slides.add_slide(layout)
 
-    # Title (idx=0)
-    set_ph_text(ph_by_idx(slide, 0), "THE OVERALL GOAL IS TO CREATE BUSINESS VALUE", size=20, bold=True)
+    # Clear default title PH idx=0 — we use a manual textbox instead
+    title_ph = ph_by_idx(slide, 0)
+    if title_ph:
+        set_ph_text(title_ph, "")
 
-    # 3 rows: number / headline / arrow
-    slot_mapping = [
-        (14, 13, 17),  # Row 1
-        (16, 15, 18),  # Row 2
-        (20, 19, 21),  # Row 3
-    ]
+    # Title — manual TEXT_BOX with "CREATE BUSINESS VALUE" highlighted
+    title_text = bv_data.get("title",
+        "THE OVERALL GOAL IS TO <<CREATE BUSINESS VALUE>>")
+    # Build textbox with scheme color highlight
+    tb = slide.shapes.add_textbox(
+        Inches(0.23), Inches(1.21), Inches(12.82), Inches(1.35)
+    )
+    tf = tb.text_frame
+    tf.word_wrap = True
+    tf.vertical_anchor = MSO_ANCHOR.TOP
+    p = tf.paragraphs[0]
+    p.alignment = PP_ALIGN.LEFT
+    segments = _parse_rich_segments(title_text)
+    for seg_text, style in segments:
+        r = p.add_run()
+        r.text = seg_text
+        r.font.size = Pt(20)
+        if style == 'green':
+            # <<green>> in title = scheme color highlight (tx1 = dark on this layout)
+            _set_run_scheme_color(r, "tx1")
+        else:
+            r.font.color.rgb = OT_WHITE  # Normal text white on dark bg
 
-    for i, item in enumerate(values[:3]):
+    items = bv_data.get("items", [])
+    # Number placeholders and content placeholders
+    slot_mapping = [(14, 13), (16, 15), (20, 19)]
+
+    for i, item in enumerate(items[:3]):
         if i < len(slot_mapping):
-            num_idx, headline_idx, arrow_idx = slot_mapping[i]
+            num_idx, content_idx = slot_mapping[i]
             num = item.get("number", f"{i+1:02d}")
-            title = item.get("title", "")
+            item_title = item.get("title", "")
             desc = item.get("description", "")
 
-            set_ph_text(ph_by_idx(slide, num_idx), num)
-            # Use title only in headline (short), put description below via text frame
-            headline_ph = ph_by_idx(slide, headline_idx)
-            if headline_ph and headline_ph.has_text_frame:
-                tf = headline_ph.text_frame
-                tf.clear()
-                # Title line (bold)
-                p = tf.paragraphs[0]
-                r = p.add_run()
-                r.text = title
-                r.font.bold = True
-                r.font.size = Pt(14)
-                # Description line (normal, smaller)
-                if desc:
-                    p2 = tf.add_paragraph()
-                    p2.text = desc
-                    p2.font.size = Pt(11)
-                    p2.space_before = Pt(4)
-            set_ph_text(ph_by_idx(slide, arrow_idx), "")
+            # Number — theme color
+            set_ph_text_theme(ph_by_idx(slide, num_idx), num)
 
-    set_footer(slide, slide_count(prs))
+            # Content — single paragraph: "Bold Title" + " " + "- description" + "green end"
+            # Matching original format exactly
+            content_ph = ph_by_idx(slide, content_idx)
+            if content_ph and content_ph.has_text_frame:
+                tf = content_ph.text_frame
+                tf.clear()
+                tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+                _enable_autofit(tf)
+
+                p1 = tf.paragraphs[0]
+                # Bold title
+                r1 = p1.add_run()
+                r1.text = item_title
+                r1.font.bold = True
+                r1.font.size = Pt(16)
+
+                if desc:
+                    # Parse description for <<green>> highlights
+                    plain_desc = re.sub(r'<<|>>', '', desc)
+                    segments = _parse_rich_segments(desc)
+                    # Space separator
+                    r_sp = p1.add_run()
+                    r_sp.text = " "
+                    r_sp.font.size = Pt(16)
+                    # "- description" with green highlights
+                    for seg_text, style in segments:
+                        r = p1.add_run()
+                        r.font.size = Pt(16)
+                        if style == 'green':
+                            r.text = seg_text
+                            _set_run_scheme_color(r, "bg2")  # Lime green
+                        elif style == 'bold':
+                            r.text = seg_text
+                            r.font.bold = True
+                        else:
+                            r.text = seg_text
+
+    # Clear unused arrow/extra placeholders
+    for idx in [17, 18, 21]:
+        set_ph_text(ph_by_idx(slide, idx), "")
+
+    set_footer_textbox(slide, slide_count(prs))
     if verbose:
         logger.info("Created Business Value slide")
 
 
-def make_poc_summary(prs, intro, features, demo_description="",
-                     title_text="WE HAVE FOCUSED ON THE CORE PAIN POINTS", verbose=False):
+def _set_run_scheme_color(run, scheme_val="tx1"):
+    """Set a run's font color using scheme color (e.g., "tx1" for dark text).
+    This matches the original PPTX which uses schemeClr "tx1" for text on lime bg.
     """
-    PoC summary slide — DEFAULT layout with text boxes.
-    Includes features list and optional demo description.
+    rPr = run._r.get_or_add_rPr()
+    # Remove any existing color
+    for child in list(rPr):
+        tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+        if tag == 'solidFill':
+            rPr.remove(child)
+    solidFill = etree.SubElement(rPr, f'{{{NS_A}}}solidFill')
+    schemeClr = etree.SubElement(solidFill, f'{{{NS_A}}}schemeClr')
+    schemeClr.set('val', scheme_val)
+
+
+def make_poc_summary(prs, intro, features, verbose=False):
+    """PoC Summary slide — DEFAULT layout.
+
+    Original formatting:
+    - TEXT_BOX at (0.23, 0.65) 12.82x1.35 — title 40pt, white on dark bg
+    - AUTO_SHAPE (RECTANGLE) at (3.55, 1.96) 6.24x4.37 — scheme fill "bg2" (lime)
+      Text uses schemeClr "tx1" (dark/black) for readability on lime bg
     """
     layout = find_layout(prs, "DEFAULT")
     if not layout:
         return
     slide = prs.slides.add_slide(layout)
 
-    # Title
-    add_textbox(slide, 0.5, 0.3, 12.0, 0.9, title_text,
-                font_size=20, bold=True, text_color=OT_WHITE,
-                alignment=PP_ALIGN.LEFT)
+    # Title — 40pt, EXPLICIT white (textbox on dark DEFAULT bg)
+    add_textbox(slide, 0.23, 0.65, 12.82, 1.35,
+                "WE HAVE FOCUSED ON THE CORE PAIN POINTS",
+                font_size=40, text_color=OT_WHITE, bold=False,
+                alignment=PP_ALIGN.LEFT,
+                vertical_anchor=MSO_ANCHOR.TOP)
 
-    # Intro text
-    add_textbox(slide, 0.8, 1.3, 11.0, 0.5, intro,
-                font_size=14, text_color=OT_LIGHT_GRAY, alignment=PP_ALIGN.LEFT)
+    # Lime rectangle with scheme fill "bg2" (=lt2=#D5F89E)
+    rect = add_auto_shape_with_scheme_fill(
+        slide, 3.55, 1.96, 6.24, 4.37, scheme_color="bg2"
+    )
 
-    # Features in a card-style box
-    feature_bullets = [f"• {f}" for f in features]
-    feature_text = "\n".join(feature_bullets)
-    add_textbox(slide, 0.8, 2.0, 11.0, 3.0, feature_text,
-                font_size=13, text_color=OT_ASH, alignment=PP_ALIGN.LEFT,
-                bg_color=OT_VERY_LIGHT_GRAY)
+    # Add text to the rectangle shape
+    tf = rect.text_frame
+    tf.word_wrap = True
+    tf.vertical_anchor = MSO_ANCHOR.MIDDLE
 
-    # Demo description if provided
-    if demo_description:
-        add_textbox(slide, 0.8, 5.2, 11.0, 1.3, f"Demo: {demo_description}",
-                    font_size=11, text_color=OT_ASH, alignment=PP_ALIGN.LEFT,
-                    bg_color=OT_LIGHT_GRAY)
+    # First line: intro text — with line_spacing=1.5 like original
+    p0 = tf.paragraphs[0]
+    p0.line_spacing = 1.5
+    p0.alignment = PP_ALIGN.LEFT
+    r0 = p0.add_run()
+    r0.text = intro
+    r0.font.size = Pt(16)
+    r0.font.bold = False
+    _set_run_scheme_color(r0, "tx1")  # Dark text on lime bg
 
-    add_footer(slide, slide_count(prs))
+    # Feature lines — bold, dark on lime, with line_spacing=1.5
+    for feature in features:
+        p = tf.add_paragraph()
+        p.line_spacing = 1.5
+        p.alignment = PP_ALIGN.LEFT
+        r = p.add_run()
+        r.text = feature
+        r.font.size = Pt(16)
+        r.font.bold = True
+        _set_run_scheme_color(r, "tx1")  # Dark text on lime bg
+
+    set_footer_textbox(slide, slide_count(prs))
     if verbose:
         logger.info("Created PoC Summary slide")
 
 
-def make_demo_walkthrough(prs, demo_description="", verbose=False):
-    """
-    NEW: Demo Walkthrough slide with title + demo description + image placeholder.
-
-    Uses DEFAULT layout.
-    """
+def make_image_slide_blank(prs, image_desc, verbose=False):
+    """Blank image slide for team photos — DEFAULT layout."""
     layout = find_layout(prs, "DEFAULT")
     if not layout:
         return
     slide = prs.slides.add_slide(layout)
 
-    # Title
-    add_textbox(slide, 0.5, 0.3, 12.0, 0.7, "DEMO WALKTHROUGH",
-                font_size=24, bold=True, text_color=OT_WHITE,
-                alignment=PP_ALIGN.LEFT)
-
-    # Demo description
-    if demo_description:
-        add_textbox(slide, 0.8, 1.2, 11.0, 0.6, demo_description,
-                    font_size=13, text_color=OT_LIGHT_GRAY, alignment=PP_ALIGN.LEFT)
-
-    # Large image placeholder
-    image_placeholder(slide, 0.5, 2.0, 12.0, 4.5, "Add demo screenshots here")
-
-    add_footer(slide, slide_count(prs))
+    image_placeholder(slide, 0.5, 0.5, 12.0, 6.5, image_desc)
+    set_footer_textbox(slide, slide_count(prs))
     if verbose:
-        logger.info("Created Demo Walkthrough slide")
+        logger.info(f"Created blank image slide: {image_desc}")
 
 
-def make_image_slide(prs, title, image_desc, verbose=False):
+def make_whats_next(prs, next_steps, verbose=False):
+    """What's Next slide — 'Chapter Divider Ash + Text' layout.
+
+    Original formatting:
+    - PH idx=0, 14, 15 are REMOVED entirely (not used)
+    - TEXT_BOX at (0.23, 0.65) 12.82x1.35 — "WHAT'S NEXT?" 40pt white
+    - TEXT_BOX at (0.42, 2.18) 12.62x3.32 — Content at 28pt:
+      #FFFFFF for normal text, bold+white for key phrases
     """
-    Generic content slide with title + image placeholder.
-
-    Uses DEFAULT layout (no placeholders).
-    """
-    layout = find_layout(prs, "DEFAULT")
+    layout = find_layout(prs, "Chapter Divider Ash + Text")
     if not layout:
         return
     slide = prs.slides.add_slide(layout)
 
-    # Title
-    if title:
-        add_textbox(slide, 0.5, 0.3, 12.0, 0.9, title,
-                    font_size=24, bold=True, text_color=OT_WHITE,
-                    alignment=PP_ALIGN.LEFT)
-        image_top = 1.5
-    else:
-        image_top = 0.5
+    # REMOVE all default placeholders entirely — original doesn't use them
+    for idx in [0, 14, 15]:
+        remove_shape_by_ph_idx(slide, idx)
 
-    # Image placeholder
-    image_placeholder(slide, 0.5, image_top, 12.0, 5.0, image_desc)
+    # Title — manual TEXT_BOX, 40pt, EXPLICIT white (dark Ash bg)
+    add_textbox(slide, 0.23, 0.65, 12.82, 1.35,
+                "WHAT'S NEXT?", font_size=40, text_color=OT_WHITE,
+                bold=False, alignment=PP_ALIGN.LEFT,
+                vertical_anchor=MSO_ANCHOR.TOP)
 
-    add_footer(slide, slide_count(prs))
+    # Content — manual TEXT_BOX at (0.42, 2.18) 12.62x3.32
+    tb = slide.shapes.add_textbox(
+        Inches(0.42), Inches(2.18), Inches(12.62), Inches(3.32)
+    )
+    tf = tb.text_frame
+    tf.word_wrap = True
+    tf.vertical_anchor = MSO_ANCHOR.TOP
+
+    # Original starts content at P1 (P0 empty), uses sp_after=6, line_sp=1.0
+    # Bold keywords use ACCENT_2 theme color (green), normal text is #FFFFFF
+    # Font is Akkurat LL throughout
+    for i, step in enumerate(next_steps):
+        # Add empty paragraph first time to match original P0 being empty
+        if i == 0:
+            p_empty = tf.paragraphs[0]  # Use existing empty P0
+            p = tf.add_paragraph()
+        else:
+            p_empty = tf.add_paragraph()  # Empty spacer paragraph
+            p = tf.add_paragraph()
+        p.space_after = Pt(6)
+        p.line_spacing = 1.0
+        p.alignment = PP_ALIGN.LEFT
+
+        segments = _parse_rich_segments(step)
+        for seg_text, style in segments:
+            r = p.add_run()
+            r.text = seg_text
+            r.font.size = Pt(28)
+            r.font.name = "Akkurat LL"
+            if style == 'bold':
+                r.font.bold = True
+                _set_run_scheme_color(r, "accent2")  # Green accent for bold
+            elif style == 'green':
+                r.font.bold = False
+                r.font.color.rgb = OT_GREEN_HIGHLIGHT
+            else:
+                r.font.bold = False
+                r.font.color.rgb = OT_WHITE  # Normal text — white on dark bg
+
+    set_footer_textbox(slide, slide_count(prs))
     if verbose:
-        logger.info(f"Created image slide: {title}")
+        logger.info("Created What's Next slide")
 
 
 def make_thanks(prs, ot_team, client_contacts, client_name, verbose=False):
-    """
-    Closing thanks slide — Bullet Points Ash layout.
+    """Thanks slide — 'Bullet Points Ash' layout.
 
-    Layout:
-      idx=0   Title ("Many thanks!")
-      idx=1   Subtitle
-      idx=27  Emoji left
-      idx=36  Headline left
-      idx=42  Text left (OT team members)
-      idx=46  Emoji right
-      idx=44  Headline right
-      idx=45  Text right (client contacts)
-      idx=11  Footer
-      idx=12  Slide number
+    Original formatting:
+    - PICTURE at (0, 0) 5.39x5.99 — team photo full-bleed left
+    - TEXT_BOX at (5.91, 1.48) 8.21x1.38 — "Many thanks!" 24pt #FFFFFF left-aligned
+    - TEXT_BOX at (6.84, 2.89) 6.36x1.78 — Team names 20pt #FFFFFF, anchor=t
+    - Multiple small logo PICTURES at bottom
     """
     layout = find_layout(prs, "Bullet Points Ash")
     if not layout:
         return
     slide = prs.slides.add_slide(layout)
 
-    # Title (idx=0)
-    set_ph_text(ph_by_idx(slide, 0), "Many thanks!", size=44, bold=True)
+    # Clear all default placeholders from this layout
+    for idx in [0, 1, 27, 36, 42, 44, 45, 46, 47]:
+        ph = ph_by_idx(slide, idx)
+        if ph:
+            try:
+                sp = ph._element
+                sp.getparent().remove(sp)
+            except Exception:
+                pass
 
-    # Clear subtitle (idx=1)
-    set_ph_text(ph_by_idx(slide, 1), "")
+    # Bottom dark rectangle bar (like original Rechteck 27)
+    rect = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(0.0), Inches(6.0), Inches(13.33), Inches(1.5)
+    )
+    rect.line.fill.background()
+    # Dark fill matching ash bg
+    rect.fill.solid()
+    rect.fill.fore_color.rgb = RGBColor(0x24, 0x24, 0x24)  # dk2 ash
 
-    # Left column: OT team
-    set_ph_text(ph_by_idx(slide, 27), "🙏")
-    set_ph_text(ph_by_idx(slide, 36), "ONE THOUSAND Team")
+    # Left: team photo placeholder (full bleed)
+    image_placeholder(slide, 0, 0, 5.39, 5.99, "Add team group photo")
 
-    # All team members (OT + client) in left text placeholder
-    all_members = ot_team.copy()
+    # "Many thanks!" — 24pt white, Wavetable font
+    tb_thanks = slide.shapes.add_textbox(
+        Inches(5.91), Inches(1.48), Inches(8.21), Inches(1.38)
+    )
+    tf_t = tb_thanks.text_frame
+    tf_t.word_wrap = True
+    tf_t.vertical_anchor = MSO_ANCHOR.TOP
+    p = tf_t.paragraphs[0]
+    p.line_spacing = 1.0
+    r = p.add_run()
+    r.text = "Many thanks!"
+    r.font.size = Pt(24)
+    r.font.color.rgb = OT_WHITE
+    r.font.name = "Wavetable"
+
+    # Team names — 20pt white, Akkurat LL font
+    team_tb = slide.shapes.add_textbox(
+        Inches(6.84), Inches(2.89), Inches(6.36), Inches(1.78)
+    )
+    tf = team_tb.text_frame
+    tf.word_wrap = True
+    tf.vertical_anchor = MSO_ANCHOR.TOP
+
+    all_members = ot_team[:]
     if client_contacts:
-        all_members.append("")  # blank line separator
-        all_members.append(f"{client_name}:")
         all_members.extend(client_contacts)
 
-    ot_text = ph_by_idx(slide, 42)
-    if ot_text and ot_text.has_text_frame:
-        tf = ot_text.text_frame
-        tf.clear()
-        for i, member in enumerate(all_members):
-            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-            p.text = member
-            p.font.size = Pt(14)
-            p.space_before = Pt(4)
-            p.space_after = Pt(4)
+    for i, member in enumerate(all_members):
+        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+        r = p.add_run()
+        r.text = member
+        r.font.size = Pt(20)
+        r.font.color.rgb = OT_WHITE
+        r.font.name = "Akkurat LL"
 
-    # Clear right column placeholders (we use that area for images)
-    set_ph_text(ph_by_idx(slide, 46), "")
-    set_ph_text(ph_by_idx(slide, 44), "")
-    set_ph_text(ph_by_idx(slide, 45), "")
-    set_ph_text(ph_by_idx(slide, 47), "")
+    # Bottom logos
+    image_placeholder(slide, 0.5, 6.5, 2.5, 0.8, "Client logo")
+    image_placeholder(slide, 9.6, 6.5, 2.7, 0.8, "OT + partner logos")
 
-    # Image placeholders in right column area
-    image_placeholder(slide, 7.0, 1.8, 5.5, 2.0, "Add team group photo")
-    image_placeholder(slide, 7.0, 4.2, 2.5, 1.8, "Client logos")
-    image_placeholder(slide, 9.8, 4.2, 2.7, 1.8, "OT + partner logos")
-
-    set_footer(slide, slide_count(prs))
+    set_footer_textbox(slide, slide_count(prs))
     if verbose:
         logger.info("Created Thanks slide")
 
 
 # ---------------------------------------------------------------------------
-# Main generation function
+# Main generation
 # ---------------------------------------------------------------------------
 
-def generate_presentation(template_path, variables_path, content_path, output_path, verbose=False):
-    """Generate the complete hackathon presentation."""
+def generate_presentation(template_path, variables_path, content_path,
+                          output_path, verbose=False):
     variables = load_json(variables_path)
     content = load_json(content_path)
     prs = Presentation(str(template_path))
@@ -1089,92 +1211,75 @@ def generate_presentation(template_path, variables_path, content_path, output_pa
 
     # === DAY 1 PRE-INTRO ===
     make_cover(prs, client, location, d1, use_case, day=1, verbose=verbose)
-    make_checkin(prs, content.get("check_in", {}).get("questions", []), client, verbose=verbose)
+    make_checkin(prs, content.get("check_in", {}).get("questions", []),
+                 client, verbose=verbose)
     make_agenda(prs, content.get("agenda", {}), verbose=verbose)
 
     # === USE CASE SECTION ===
-    make_toc(prs, num_items=5, verbose=verbose)
+    make_toc(prs, verbose=verbose)
 
     uc = content.get("use_case", {})
-    make_chapter(prs, "01", "Pain", uc.get("pain_points", []), verbose=verbose)
 
-    # Data slide — format data sources into bullets
+    # 01 Pain — with <<green>> inline highlights
+    make_pain(prs, uc.get("pain_points", []), verbose=verbose)
+
+    # 02 Data — with **bold** prefixes
     data_sources = uc.get("data_sources", [])
     data_bullets = [
-        f"{src.get('icon', '')} {src.get('title', '')}: {src.get('description', '')}"
+        f"{src.get('title', '')} {src.get('description', '')}"
         for src in data_sources
     ]
-    make_chapter(prs, "02", "Data", data_bullets, verbose=verbose)
+    make_data(prs, data_bullets, verbose=verbose)
 
     make_data_screenshots(prs, verbose=verbose)
 
-    # NEW: System Landscape slide
-    landscape = uc.get("system_landscape", {})
-    if landscape:
-        make_system_landscape(prs, landscape, verbose=verbose)
-
+    # 03 Approach — with **bold** step prefixes
     approach = uc.get("approach_steps", [])
     q = uc.get("approach_question", "")
     if q:
         approach = approach + [q]
-    make_chapter(prs, "03", "Approach", approach, verbose=verbose)
+    make_approach(prs, approach, verbose=verbose)
 
-    make_chapter(prs, "04", "Challenges", uc.get("challenges", []), verbose=verbose)
+    # 04 Challenges — with **bold** — format
+    make_challenges(prs, uc.get("challenges", []), verbose=verbose)
 
+    # === BREAKTHROUGH DIVIDER ===
     make_divider(prs, "Let's create A BREAKTHROUGH!", verbose=verbose)
 
     # === DAY 2 ===
     make_cover(prs, client, location, d2, use_case, day=2, verbose=verbose)
-
-    make_image_slide(prs, "", "Add team photos from Day 1 here", verbose=verbose)
+    make_image_slide_blank(prs, "Add team photos from Day 1 here", verbose=verbose)
 
     make_divider(prs, "What have we done in the past 30h?", verbose=verbose)
 
-    make_image_slide(prs, "WE DISCUSSED THE PROCESS FLOW",
-                     "Add process flow diagram (from whiteboard / Miro)", verbose=verbose)
-    make_image_slide(prs, "WE'VE SET UP AN INITIAL ARCHITECTURE",
-                     "Add architecture diagram (from Miro / whiteboard)", verbose=verbose)
+    # Process Flow & Architecture — separate functions with exact formatting
+    make_process_flow(prs, verbose=verbose)
+    make_architecture(prs, verbose=verbose)
 
+    # === RESULTS ===
     res = content.get("results", {})
-    make_business_value(prs, res.get("business_value", []), verbose=verbose)
-
-    # NEW: Key Metrics slide
-    metrics = res.get("key_metrics", {})
-    if metrics:
-        make_key_metrics(prs, metrics, verbose=verbose)
+    make_business_value(prs, res.get("business_value", {}), verbose=verbose)
 
     poc = res.get("poc_summary", {})
     make_poc_summary(prs,
                      poc.get("intro", "We have built a proof of concept (PoC):"),
                      poc.get("features", []),
-                     poc.get("demo_description", ""),
                      verbose=verbose)
 
     make_divider(prs, "DEMO", verbose=verbose)
-
-    # NEW: Demo Walkthrough slide
-    if poc.get("demo_description"):
-        make_demo_walkthrough(prs, poc.get("demo_description"), verbose=verbose)
-
     make_divider(prs, "Expectations check", verbose=verbose)
 
-    # NEW: Lessons Learned slide
-    lessons = res.get("lessons_learned", [])
-    if lessons:
-        make_lessons_learned(prs, lessons, verbose=verbose)
-
-    make_chapter(prs, "", "WHAT'S NEXT?", res.get("next_steps", []), verbose=verbose)
+    # What's Next — dedicated function with manual textboxes
+    make_whats_next(prs, res.get("next_steps", []), verbose=verbose)
 
     make_thanks(prs, ot_team, client_contacts, client, verbose=verbose)
 
-    # Save
     prs.save(str(output_path))
     logger.info(f"Saved {slide_count(prs)} slides → {output_path}")
 
 
 def main():
-    """Main entry point."""
-    parser = argparse.ArgumentParser(description="Generate OT hackathon presentation")
+    parser = argparse.ArgumentParser(description="Generate OT hackathon presentation v2")
     parser.add_argument("--template", type=Path, required=True)
     parser.add_argument("--variables", type=Path, required=True)
     parser.add_argument("--content", type=Path, required=True)
@@ -1186,7 +1291,8 @@ def main():
         logger.setLevel(logging.DEBUG)
 
     try:
-        generate_presentation(args.template, args.variables, args.content, args.output, args.verbose)
+        generate_presentation(args.template, args.variables, args.content,
+                              args.output, args.verbose)
     except Exception as e:
         logger.error(f"Error: {e}")
         if args.verbose:
