@@ -5,9 +5,11 @@ description: >
   Triggers on: "scope document", "scope doc", "project scope", "PoC scope",
   "create scope", "generate scope", "scope for this", "formal document from hackathon",
   "client deliverable", "project definition document", "convert hackathon to scope".
-  Transforms hackathon summaries, project briefs, or meeting notes into
+  Transforms hackathon debrief documents and additional user context into
   formal scope documents with cover page, numbered sections, architecture
   diagrams, sprint design, and anti-hallucination verification.
+  Project name and client name are extracted from the hackathon debrief —
+  not asked separately.
   Supports English and German.
 license: Proprietary
 triggers:
@@ -32,9 +34,9 @@ triggers:
 
 ## Overview
 
-This skill transforms raw hackathon presentations, project briefs, or meeting notes into **professional One Thousand branded PoC scope documents**. It uses a template-based approach for pixel-perfect formatting consistency.
+This skill transforms hackathon debrief documents and additional user context into **professional One Thousand branded PoC scope documents**. It takes two inputs — a hackathon debrief document (primary source of truth) and additional user context (post-hackathon decisions, scope changes, conversation notes) — and uses a template-based approach for pixel-perfect formatting consistency.
 
-The workflow: Extract information → Generate content with confidence scoring → Iteratively review weak sections with the user → Assemble branded DOCX → Deliver client-ready document.
+The workflow: Collect inputs (hackathon debrief + user notes) → Extract information (including project name and client name from the debrief) → Generate content with confidence scoring → Iteratively review weak sections with the user → Assemble branded DOCX → Deliver client-ready document.
 
 **Output:** A branded DOCX file with green cover page, One Thousand logo on every page, numbered headings in green, properly formatted subsections, bullet lists, sprint design, and architecture diagram.
 
@@ -56,6 +58,24 @@ The workflow: Extract information → Generate content with confidence scoring �
 
 ---
 
+## Inputs
+
+This skill requires **two inputs**:
+
+### Input 1: Hackathon Debrief Document
+- Can be a PDF, DOCX, or text pasted in conversation
+- If uploaded as a file, extract text using appropriate tools
+- This is the **primary source of truth** for all technical content
+- **Project name and client name are extracted from this document** — do NOT ask for them separately. The cover page values (`cover_title`, `cover_client_x_ot`) are derived from the hackathon debrief content.
+
+### Input 2: Additional User Context
+- Post-hackathon decisions, scope changes, customer conversation notes, meeting notes, or email excerpts
+- Can be provided as text in the conversation
+- May contain updated requirements, scope refinements, or timeline preferences
+- **Priority:** User-provided context overrides hackathon doc when there are conflicts (flag the conflict)
+
+---
+
 ## Workflow
 
 ### Phase 1: Input Collection + Background Setup
@@ -63,13 +83,11 @@ The workflow: Extract information → Generate content with confidence scoring �
 Ask the user using AskUserQuestion:
 
 1. **Language:** English or German?
-2. **Source document:** Hackathon PDF, Word file, or text notes
-3. **Architecture diagram:** Extract from source or generate new one? (Always included)
-4. **Additional context:** Post-hackathon decisions, scope changes, meeting notes
-5. **Cover details:**
-   - Project/use-case name (appears large on cover)
-   - Document subtitle (usually "Project Scope Document" / "Projekt Scope Dokument")
-   - Client name × One Thousand (e.g., "RVT x One Thousand")
+2. **Hackathon Debrief Document:** Source file (PDF, DOCX, or text)
+3. **Additional Context:** Post-hackathon decisions, scope changes, customer conversation notes
+4. **Architecture Diagram:** Extract from source or generate new one? (Always included)
+
+**Do NOT ask for project name, client name, or cover details** — these are extracted from the hackathon debrief document during Phase 2. The cover page values (`cover_title`, `cover_subtitle`, `cover_client_x_ot`) are populated automatically from extracted content.
 
 #### Background: Pre-warm Dependencies
 

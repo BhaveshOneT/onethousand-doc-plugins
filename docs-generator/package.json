@@ -1,6 +1,6 @@
 {
   "name": "docs-generator",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Claude Code plugin for professional document generation with One Thousand branding. Scope documents, hackathon presentations (PPTX), sprint design plans (Confluence), architecture diagrams (Graphviz), confidence-scored content, and anti-hallucination verification. EN/DE support.",
   "type": "module",
   "keywords": [
