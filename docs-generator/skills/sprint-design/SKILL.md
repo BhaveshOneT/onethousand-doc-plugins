@@ -5,9 +5,9 @@ description: >
   Triggers on: "design plan", "sprint design", "project design plan",
   "sprint plan", "create design plan", "generate sprints",
   "project timeline", "sprint breakdown", "design plan for this".
-  Transforms hackathon summaries and customer conversation inputs into
-  structured Confluence pages with architecture diagram and sprint
-  timeline table — placed under the correct use-case → project
+  Transforms hackathon summaries, scope documents, and customer conversation
+  inputs into structured Confluence pages with architecture diagram and
+  sprint timeline table — placed under the correct use-case → project
   management → project design plan hierarchy. Section inclusion follows
   deterministic rules based on sprint count, source material, and
   project complexity. Supports English and German. Includes confidence
@@ -32,7 +32,7 @@ triggers:
 
 ## Overview
 
-This skill generates **Project Design Plan** pages directly in Confluence, following the established One Thousand 2025+ structure. It takes two inputs — a hackathon summary document and additional customer conversation context — and produces a **concise, client-focused** design plan with architecture diagram and sprint timeline table.
+This skill generates **Project Design Plan** pages directly in Confluence, following the established One Thousand 2025+ structure. It takes three inputs — a hackathon summary document, a scope document (if one exists), and additional customer conversation context — and produces a **concise, client-focused** design plan with architecture diagram and sprint timeline table.
 
 The workflow: Collect inputs (hackathon doc + scope doc + user notes) → Extract content → Apply deterministic section rules → Score confidence → Fill metadata gaps from Close CRM (dates, names only) → Ask user for remaining gaps → Generate architecture diagram → Publish to Confluence → Instruct user to upload diagram manually → Verify.
 
@@ -246,14 +246,21 @@ All anti-hallucination rules from `references/anti-hallucination-rules.md` apply
 
 ## Inputs
 
-This skill requires **two inputs**:
+This skill requires **three inputs** (the first two are mandatory; the third is explicitly asked for but may not exist):
 
 ### Input 1: Hackathon Summary Document
 - Can be a PDF, DOCX, or text pasted in conversation
 - If uploaded as a file, extract text using appropriate tools
 - This is the **primary source of truth** for technical content
 
-### Input 2: Customer Conversation / Additional Context
+### Input 2: Scope Document (if one exists)
+- A scope document, statement of work, or project brief for this engagement
+- Can be a PDF, DOCX, Confluence page URL, or text pasted in conversation
+- Contains requirements, timeline, features, and project boundaries
+- **This input directly controls section inclusion:** If a scope document exists, the `## Key Requirements` section is SKIPPED (Rule 2). If no scope document exists, Key Requirements is INCLUDED when requirements are present in source material.
+- **You MUST explicitly ask the user whether a scope document exists** during Phase 1 — do not silently assume one way or the other. The answer determines document structure.
+
+### Input 3: Customer Conversation / Additional Context
 - Notes from post-hackathon discussions with the customer
 - Can be provided as text in the conversation, meeting notes, or email excerpts
 - May contain updated requirements, scope changes, timeline preferences
@@ -271,8 +278,9 @@ Ask the user using AskUserQuestion:
 2. **Confluence Space:** Which space should the design plan be created in? (Provide space key or name)
 3. **Project/Use Case Name:** Name of the project (used for page title)
 4. **Hackathon Document:** Source file (PDF, DOCX, or text)
-5. **Customer Notes:** Additional context from customer conversations
-6. **Architecture Diagram:** Extract from source, generate new, or skip?
+5. **Scope Document:** Do you have a scope document, statement of work, or project brief for this project? (PDF, DOCX, Confluence page URL, or text.) If yes, provide it. If no, say "no scope doc" — this determines whether the Key Requirements section is included (see Rule 2).
+6. **Customer Notes:** Additional context from customer conversations
+7. **Architecture Diagram:** Extract from source, generate new, or skip?
 
 #### Background: Pre-warm Dependencies
 
