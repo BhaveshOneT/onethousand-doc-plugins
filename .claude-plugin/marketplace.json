@@ -5,12 +5,12 @@
   },
   "metadata": {
     "description": "One Thousand GmbH document generation plugins",
-    "version": "1.6.0"
+    "version": "1.7.0"
   },
   "plugins": [
     {
       "name": "docs-generator",
-      "version": "1.6.0",
+      "version": "1.7.0",
       "source": "./docs-generator",
       "description": "Professional document generation: scope documents, hackathon presentations (PPTX), and sprint design plans (Confluence) with One Thousand branding, Graphviz architecture diagrams, deterministic section rules, confidence scoring, and anti-hallucination verification. EN/DE support.",
       "category": "productivity"
