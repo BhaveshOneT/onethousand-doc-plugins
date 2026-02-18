@@ -1,6 +1,6 @@
 {
   "name": "docs-generator",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Professional document generation plugin with One Thousand branding. Generates scope documents, hackathon presentations, sprint design plans (Confluence), proposals, and client-facing deliverables from hackathon summaries and project briefs. Includes PPTX presentation generation with branded OT slide layouts, Confluence design plan generation, architecture diagram generation (Graphviz), confidence-scored content, iterative quality review, and anti-hallucination verification. Supports English and German.",
   "author": {
     "name": "One Thousand GmbH"
