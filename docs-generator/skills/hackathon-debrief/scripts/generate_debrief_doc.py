@@ -220,10 +220,15 @@ class MdParagraph:
     text: str = ''
 
 @dataclass
+class MdListItem:
+    text: str = ''
+    indent: int = 0  # 0 = top-level, 1 = sub-item, 2 = sub-sub-item
+
+@dataclass
 class MdList:
     type: str = 'list'
     ordered: bool = False
-    items: List[str] = field(default_factory=list)
+    items: List[Any] = field(default_factory=list)  # List[str] or List[MdListItem]
 
 @dataclass
 class MdImage:
@@ -346,13 +351,20 @@ def _parse_markdown_blocks(markdown: str) -> List[MdBlock]:
             blocks.append(MdList(ordered=True, items=items))
             continue
 
-        # Unordered list
+        # Unordered list (with nested sub-bullet support)
         if re.match(r'^[-*]\s+', trimmed):
-            items = []
+            items: List[MdListItem] = []
             while i < len(lines):
-                lt = lines[i].strip()
+                raw = lines[i]
+                lt = raw.strip()
                 if re.match(r'^[-*]\s+', lt):
-                    items.append(re.sub(r'^[-*]\s+', '', lt))
+                    # Detect indent level from raw line (before stripping)
+                    leading = len(raw) - len(raw.lstrip())
+                    indent_level = min(leading // 2, 2)  # 0, 2+ spaces → 1, 4+ → 2
+                    items.append(MdListItem(
+                        text=re.sub(r'^[-*]\s+', '', lt),
+                        indent=indent_level,
+                    ))
                     i += 1
                 elif lt == '':
                     peek = i + 1
@@ -1086,10 +1098,18 @@ class DebriefDocxGenerator:
 
             elif isinstance(block, MdList):
                 for idx, item in enumerate(block.items):
-                    if block.ordered:
-                        list_text = f'{idx + 1}. {item}'
+                    # Extract text and indent level
+                    if isinstance(item, MdListItem):
+                        item_text = item.text
+                        indent_level = item.indent
                     else:
-                        list_text = item
+                        item_text = str(item)
+                        indent_level = 0
+
+                    if block.ordered:
+                        list_text = f'{idx + 1}. {item_text}'
+                    else:
+                        list_text = item_text
 
                     para = doc.add_paragraph()
                     pf = para.paragraph_format
@@ -1110,6 +1130,12 @@ class DebriefDocxGenerator:
                     else:
                         # Bullet list via numbering
                         para.style = doc.styles['List Bullet']
+                        # Apply additional indent for nested sub-bullets
+                        if indent_level > 0:
+                            ind = OxmlElement('w:ind')
+                            indent_twips = str(360 + indent_level * 360)
+                            ind.set(qn('w:left'), indent_twips)
+                            pPr.append(ind)
 
                     self._add_inline_runs(para, list_text)
 
