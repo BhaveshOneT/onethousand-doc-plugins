@@ -675,6 +675,35 @@ def _make_hyperlink_paragraph(
 # Helper: add a styled run to a paragraph
 # ---------------------------------------------------------------------------
 
+def _set_paragraph_spacing(
+    para,
+    after: Optional[int] = None,
+    before: Optional[int] = None,
+    line: Optional[int] = None,
+    line_rule: Optional[str] = None,
+) -> None:
+    """Set paragraph spacing via a single clean w:spacing element.
+
+    Avoids the duplicate-element bug caused by mixing python-docx API
+    (pf.space_after) with raw XML appends.  All attributes go on ONE element.
+    """
+    p_elem = para._element
+    pPr = p_elem.get_or_add_pPr()
+    # Remove any existing spacing elements
+    for existing in pPr.findall(qn('w:spacing')):
+        pPr.remove(existing)
+    sp = OxmlElement('w:spacing')
+    if after is not None:
+        sp.set(qn('w:after'), str(after))
+    if before is not None:
+        sp.set(qn('w:before'), str(before))
+    if line is not None:
+        sp.set(qn('w:line'), str(line))
+    if line_rule is not None:
+        sp.set(qn('w:lineRule'), line_rule)
+    pPr.append(sp)
+
+
 def _add_run(
     paragraph,
     text: str,
@@ -1044,10 +1073,8 @@ class DebriefDocxGenerator:
 
             # H1 heading with bookmark
             para = doc.add_paragraph()
-            pf = para.paragraph_format
-            pf.space_before = Twips(400)
-            pf.space_after = Twips(300)
-            pf.keep_with_next = True
+            para.paragraph_format.keep_with_next = True
+            _set_paragraph_spacing(para, before=400, after=300)
             _add_run(para, section.get('title', section_id), FONT_FAMILIES['heading'],
                      Pt(16), BRAND_COLORS['sharpGreen'], bold=True)
 
@@ -1078,17 +1105,11 @@ class DebriefDocxGenerator:
                 style_name = 'Heading2' if level <= 2 else 'Heading3'
 
                 para = doc.add_paragraph()
-                pf = para.paragraph_format
-                pf.space_before = Twips(300)
-                pf.space_after = Twips(150)
-                pf.keep_with_next = True
-                # Set line spacing
+                para.paragraph_format.keep_with_next = True
+                _set_paragraph_spacing(para, before=300, after=150)
+                # Apply heading style via XML
                 p_elem = para._element
                 pPr = p_elem.get_or_add_pPr()
-                sp = OxmlElement('w:spacing')
-                sp.set(qn('w:line'), '312')
-                sp.set(qn('w:lineRule'), 'auto')
-                pPr.append(sp)
                 pStyle = OxmlElement('w:pStyle')
                 pStyle.set(qn('w:val'), style_name)
                 pPr.insert(0, pStyle)
@@ -1112,26 +1133,19 @@ class DebriefDocxGenerator:
                         list_text = item_text
 
                     para = doc.add_paragraph()
-                    pf = para.paragraph_format
-                    pf.space_after = Twips(120)
-                    # Line spacing 324
-                    p_elem = para._element
-                    pPr = p_elem.get_or_add_pPr()
-                    sp = OxmlElement('w:spacing')
-                    sp.set(qn('w:line'), '324')
-                    sp.set(qn('w:lineRule'), 'auto')
-                    pPr.append(sp)
 
                     if block.ordered:
-                        # Indented paragraph with number prefix
-                        ind = OxmlElement('w:ind')
-                        ind.set(qn('w:left'), '720')
-                        pPr.append(ind)
+                        # Ordered items: regular paragraphs with number prefix,
+                        # no indent, after=200 + line=324 (matches original Goal/Data)
+                        _set_paragraph_spacing(para, after=200, line=324, line_rule='auto')
                     else:
                         # Bullet list via numbering
                         para.style = doc.styles['List Bullet']
+                        _set_paragraph_spacing(para, after=120, line=324, line_rule='auto')
                         # Apply additional indent for nested sub-bullets
                         if indent_level > 0:
+                            p_elem = para._element
+                            pPr = p_elem.get_or_add_pPr()
                             ind = OxmlElement('w:ind')
                             indent_twips = str(360 + indent_level * 360)
                             ind.set(qn('w:left'), indent_twips)
@@ -1149,15 +1163,7 @@ class DebriefDocxGenerator:
                 if not block.text.strip():
                     continue
                 para = doc.add_paragraph()
-                pf = para.paragraph_format
-                pf.space_after = Twips(200)
-                # Line spacing 324
-                p_elem = para._element
-                pPr = p_elem.get_or_add_pPr()
-                sp = OxmlElement('w:spacing')
-                sp.set(qn('w:line'), '324')
-                sp.set(qn('w:lineRule'), 'auto')
-                pPr.append(sp)
+                _set_paragraph_spacing(para, after=200, line=324, line_rule='auto')
 
                 self._add_inline_runs(para, block.text)
 
