@@ -282,14 +282,7 @@ Ask the user using AskUserQuestion:
 6. **Customer Notes:** Additional context from customer conversations
 7. **Architecture Diagram:** Extract from source, generate new, or skip?
 
-#### Background: Pre-warm Dependencies
-
-**While waiting for user responses**, launch a background agent to install dependencies:
-
-```bash
-pip install pdfplumber python-docx Pillow graphviz --break-system-packages --quiet 2>/dev/null
-which dot || echo "Graphviz not installed — will use Pillow fallback for diagrams"
-```
+**Note:** Python dependencies (`pdfplumber`, `python-docx`, `Pillow`, `graphviz`) are installed automatically by the plugin's SessionStart hook. No manual `pip install` is needed.
 
 ---
 

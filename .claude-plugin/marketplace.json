@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "docs-generator",
-      "version": "1.8.0",
+      "version": "1.9.0",
       "source": "./docs-generator",
       "description": "Professional document generation: scope documents, hackathon presentations (PPTX), and sprint design plans (Confluence) with One Thousand branding, Graphviz architecture diagrams, deterministic section rules, confidence scoring, and anti-hallucination verification. EN/DE support.",
       "category": "productivity"

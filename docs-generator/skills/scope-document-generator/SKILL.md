@@ -89,17 +89,7 @@ Ask the user using AskUserQuestion:
 
 **Do NOT ask for project name, client name, or cover details** — these are extracted from the hackathon debrief document during Phase 2. The cover page values (`cover_title`, `cover_subtitle`, `cover_client_x_ot`) are populated automatically from extracted content.
 
-#### Background: Pre-warm Dependencies
-
-**While waiting for user responses**, use the Task tool to launch a background agent that installs Python dependencies. This runs concurrently with user Q&A so there is zero setup delay when scripts run later:
-
-```bash
-pip install pdfplumber python-docx Pillow graphviz --break-system-packages --quiet 2>/dev/null
-# Verify Graphviz dot is available for diagram rendering
-which dot || echo "Graphviz not installed — will use Pillow fallback for diagrams"
-```
-
-This is purely infrastructure setup — it does not affect content generation in any way.
+**Note:** Python dependencies (`pdfplumber`, `python-docx`, `Pillow`, `graphviz`) are installed automatically by the plugin's SessionStart hook. No manual `pip install` is needed.
 
 ---
 

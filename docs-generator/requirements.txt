@@ -1,0 +1,6 @@
+pdfplumber
+python-docx
+Pillow
+graphviz
+python-pptx
+lxml

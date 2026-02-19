@@ -647,10 +647,7 @@ The OT hackathon template uses these theme colors:
 
 ### Python packages
 
-```bash
-pip install python-pptx --break-system-packages
-pip install lxml --break-system-packages
-```
+**Note:** Python dependencies (`python-pptx`, `Pillow`, `lxml`, `pdfplumber`, `python-docx`, `graphviz`) are installed automatically by the plugin's SessionStart hook. No manual `pip install` is needed.
 
 ### External tools (for visual QA)
 
