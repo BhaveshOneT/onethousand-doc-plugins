@@ -226,8 +226,8 @@ Write the structured content to a JSON file at `/tmp/debrief_content.json`:
       { "name": "Sandra Mueller", "role": "Teamleiterin" }
     ],
     "oneThousand": [
-      { "name": "David Chen", "role": "AI Solutions Architect" },
-      { "name": "Anna Kowalski", "role": "Data Engineer" }
+      { "name": "Anna Kowalski", "role": "Data Engineer" },
+      { "name": "David Chen", "role": "AI Solutions Architect" }
     ]
   },
   "useCases": [
@@ -271,7 +271,7 @@ Write the structured content to a JSON file at `/tmp/debrief_content.json`:
     },
     {
       "id": "conclusion",
-      "title": "Fazit und Ausblick",
+      "title": "Fazit",
       "content": "..."
     }
   ]
@@ -295,7 +295,16 @@ Write the structured content to a JSON file at `/tmp/debrief_content.json`:
 | `useCases` | array | Use cases with title (first used for cover page subtitle) |
 | `sections` | array | Generated sections with id, title, and markdown content |
 
-**Section IDs (in order):** `background`, `hackathon_structure`, `challenge`, `goal`, `data`, `approach`, `results`, `canvas` (optional), `user_flow` (optional), `conclusion`
+**Section IDs (in order):** `background`, `hackathon_structure`, `challenge`, `goal`, `data`, `approach`, `results`, `conclusion`
+
+**Optional Section IDs:** `canvas`, `user_flow` — only include if user explicitly provides structured canvas or user flow data.
+
+**Title Page Participant Format:**
+- Single "Participants:" label (underlined) — NOT separate company headers
+- All customer names listed alphabetically, names only (no roles displayed)
+- Blank line separator
+- All One Thousand names listed alphabetically, names only (no roles displayed)
+- Roles are stored in the JSON for context during content generation but are NOT displayed on the title page
 
 **Section Content Format:** Each section's `content` field contains markdown text. The Python script converts markdown to DOCX formatting:
 - `## Heading` -> H2 (14pt, green, Amsi Pro Narw Black)
@@ -338,15 +347,17 @@ After generation:
 
 ## Style Pattern Rules
 
-The 5 mandatory style patterns MUST be applied in every debrief document. See `references/style-patterns.md` for full details.
+See `references/style-patterns.md` for full details.
 
-| Pattern | Where Applied | Requirement |
+| Pattern | Where Applied | Enforcement |
 |---------|--------------|-------------|
-| Three Pillars | Conclusion | MUST start with "Während des Hackathons haben wir uns intensiv mit den drei Hauptpfeilern beschäftigt" (DE) / "During the hackathon, we focused intensively on the three main pillars" (EN) |
-| Forward-Looking | Conclusion | MUST end with "Wir würden uns sehr freuen, diese Erfolgsgeschichte gemeinsam mit Ihnen schreiben zu dürfen!" (DE) / "We would be delighted to write this success story together with you!" (EN) |
-| AI Journey | Background | Must use "KI-Reise"/"AI journey" and "Transformation" terminology |
-| Collaborative Tone | All sections | Use "wir"/"we" over "sie"/"they" — emphasize partnership |
-| Evidence-Based | Challenge, Data, Results | All metrics must trace to source data — never invent numbers |
+| Three Pillars | Conclusion | **Optional.** The three-pillars opening is one possible structure but is NOT required. Reference documents show it is not consistently used. Use only if it naturally fits the hackathon's narrative. |
+| Forward-Looking | Conclusion | **Required.** MUST end with "Wir würden uns sehr freuen, diese Erfolgsgeschichte gemeinsam mit Ihnen schreiben zu dürfen!" (DE) / "We would be delighted to write this success story together with you!" (EN). Variant "continue writing this success story" is acceptable. |
+| AI Journey | Background | **Required.** Must use "KI-Reise"/"AI journey" and "Transformation" terminology |
+| Collaborative Tone | All sections | **Required.** Use "wir"/"we" over "sie"/"they" — emphasize partnership |
+| Evidence-Based | Challenge, Data, Results | **Required.** All metrics must trace to source data — never invent numbers |
+
+**Conclusion requirements:** The conclusion must cover: (1) feasibility proof, (2) broader transformation vision, (3) competitive/strategic value, (4) partnership commitment with forward-looking ending. It should read like a strategic executive summary, not a tactical list of next steps.
 
 ---
 
@@ -380,6 +391,36 @@ The 5 mandatory style patterns MUST be applied in every debrief document. See `r
 - Keep sections concise and report-grade
 - Target 2,200-3,200 words for core sections
 
+### Content Writing Principles
+
+These are the core rules that separate publication-ready content from content that needs manual rewriting.
+
+**Noise Filtering:**
+- Source material often contains raw notes, example emails, brainstorming fragments, and tangential discussions. Extract ONLY what belongs in a professional client deliverable.
+- Raw email examples from notes (e.g., customer inquiry samples in various languages) are evidence that a capability is needed — mention the capability, don't reproduce the emails.
+- Brainstorming notes ("maybe we can...", "basically a suggestion feature") are NOT results — they're ideation artifacts. Only include ideas that became part of the actual approach or prototype.
+- Meeting feedback bullet points (e.g., "Transform weight to kg", "Display a reason why things fail") belong in the Results section as participant feedback, synthesized into a coherent narrative — not listed verbatim.
+
+**Specificity Over Generality:**
+- WRONG: "The company faces challenges with manual processes"
+- RIGHT: "With approximately 50 quotations per day, each requiring 2–3 minutes of experienced judgment for steel grade interpretation, unit conversions, and tolerance matching..."
+- Every sentence should contain at least one specific detail from the source data (a number, a system name, a process name, a technology).
+- If you can't write a sentence with specifics, the source data doesn't support that claim — omit it.
+
+**Synthesis, Not Regurgitation:**
+- Don't just list extracted data points. Synthesize them into insight.
+- WRONG: "Pain point 1: High volume. Pain point 2: Low conversion. Pain point 3: Manual work."
+- RIGHT: "With approximately 50 quotations per day and a conversion rate below 10%, the manual process ties up significant sales capacity on quotes that may never convert — creating a bottleneck that limits both throughput and the team's ability to focus on high-value opportunities."
+- Each paragraph should tell a mini-story: situation → tension → implication.
+
+**Earned Detail:**
+- Every detail must pass the "so what?" test. If removing a sentence doesn't weaken the argument, remove it.
+- Don't add filler sentences like "This represents an exciting opportunity" or "The team was very engaged." Let the specifics speak for themselves.
+- The conclusion should look forward strategically — not just list next steps.
+
+**Industry Intelligence:**
+- Each background section should open with 1-2 sentences of genuine industry insight relevant to WHY AI matters for this specific company. This context should be accurate and non-generic.
+
 ### Anti-Hallucination Rules
 1. NEVER invent metrics, KPIs, or statistics
 2. NEVER fabricate company details
@@ -395,18 +436,18 @@ The 5 mandatory style patterns MUST be applied in every debrief document. See `r
 
 ## Section Order
 
-Sections appear in the document in this fixed order:
+Sections appear in the document in this fixed order (8 default sections):
 
-1. **Background** (Hintergrund) — Company context, AI journey, partnership
-2. **Hackathon** (Hackathon) — Event details, dates, agenda
-3. **Challenge** (Herausforderung) — Pain points, current process issues
-4. **Goal** (Ziel) — Primary/secondary goals, success criteria
-5. **Data** (Daten) — Data sources, quality, privacy
-6. **Approach** (Ansatz) — Technical solution, architecture, technologies
-7. **Results** (Ergebnisse) — Quantitative/qualitative outcomes
-8. **AI Breakthrough Canvas** (optional) — Canvas analysis
-9. **User Flow** (optional) — Process flow mapping
-10. **Conclusion** (Fazit und Ausblick) — Summary, recommendations, next steps
+1. **Background** (Hintergrund) — Company context, industry insight, AI opportunity, partnership
+2. **Hackathon** (Hackathon) — Event details, dates, day structure, atmosphere
+3. **Challenge** (Herausforderung) — Use-case label, pain points with evidence, business impact
+4. **Goal** (Ziel) — Primary strategic goal, secondary goals, success criteria
+5. **Data** (Daten) — Data sources with formats, volumes, quality observations
+6. **Approach** (Ansatz) — Methodology, architecture, technologies, processing steps
+7. **Results** (Ergebnisse) — Prototype description, demo outcomes, participant feedback
+8. **Conclusion** (Fazit) — Feasibility proof, broader vision, strategic value, partnership commitment
+
+**Canvas and User Flow** sections can be included if the user explicitly provides structured canvas or user flow data, but they are NOT default sections.
 
 **Note:** Participants are shown on the title page only, NOT as a separate content section.
 

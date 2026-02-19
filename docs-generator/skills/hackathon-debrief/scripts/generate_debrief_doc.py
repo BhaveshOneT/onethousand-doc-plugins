@@ -94,13 +94,9 @@ SECTION_TITLES: Dict[str, Dict[str, str]] = {
     'approach':            {'de': 'Ansatz',                'en': 'Approach'},
     'results':             {'de': 'Ergebnisse',            'en': 'Results'},
     'canvas':              {'de': 'AI Breakthrough Canvas','en': 'AI Breakthrough Canvas'},
-    'user_flow':           {'de': 'Benutzerfluss',         'en': 'User Flow Mapping'},
-    'conclusion':          {'de': 'Fazit und Ausblick',    'en': 'Conclusion and Outlook'},
+    'user_flow':           {'de': 'Benutzerfluss',         'en': 'User Flow'},
+    'conclusion':          {'de': 'Fazit',                 'en': 'Conclusion'},
 }
-
-LEADING_SECTION_IDS = ['background', 'hackathon_structure']
-USE_CASE_SECTION_IDS = ['challenge', 'goal', 'data', 'approach', 'results']
-TRAILING_SECTION_IDS = ['canvas', 'user_flow', 'conclusion']
 
 
 # ---------------------------------------------------------------------------
@@ -183,10 +179,8 @@ def _build_toc_entries(
     language: str,
     use_cases: Optional[List[Dict[str, Any]]] = None,
 ) -> List[TocEntry]:
-    """Build the canonical TOC entries exactly matching the TypeScript logic."""
+    """Build flat TOC entries — all level-1, sequential numbering."""
     by_id: Dict[str, Dict[str, Any]] = {s['id']: s for s in sections}
-    use_cases = use_cases or []
-    entries: List[TocEntry] = []
 
     def _title(sid: str) -> str:
         sec = by_id.get(sid)
@@ -194,48 +188,18 @@ def _build_toc_entries(
             return sec['title'].strip()
         return SECTION_TITLES.get(sid, {}).get(language, sid)
 
-    # Leading sections
-    for sid in LEADING_SECTION_IDS:
+    entries: List[TocEntry] = []
+
+    # Build entries from sections that actually exist in the content JSON,
+    # following the canonical SECTION_ORDER.
+    for sid in SECTION_ORDER:
         if sid not in by_id:
             continue
         entries.append(TocEntry(key=sid, title=_title(sid), level=1, section_id=sid))
 
-    # Use-case sections
-    available = [sid for sid in USE_CASE_SECTION_IDS if sid in by_id]
-    uc_count = max(1, len(use_cases))
-    for i in range(uc_count):
-        raw_title = (use_cases[i].get('title', '') if i < len(use_cases) else '').strip()
-        prefix = f'Anwendungsfall {i + 1}' if language == 'de' else f'Use Case {i + 1}'
-        uc_title = f'{prefix}: {raw_title}' if raw_title else prefix
-        anchor = available[0] if available else None
-        entries.append(TocEntry(key=f'use-case-{i + 1}', title=uc_title, level=1, section_id=anchor))
-
-        for sid in USE_CASE_SECTION_IDS:
-            has_section = sid in by_id
-            entries.append(TocEntry(
-                key=f'use-case-{i + 1}-{sid}',
-                title=_title(sid),
-                level=2,
-                section_id=sid if has_section else None,
-            ))
-
-    # Trailing sections
-    for sid in TRAILING_SECTION_IDS:
-        if sid not in by_id:
-            continue
-        entries.append(TocEntry(key=sid, title=_title(sid), level=1, section_id=sid))
-
-    # Apply numbering
-    top = 0
-    nested = 0
-    for entry in entries:
-        if entry.level == 1:
-            top += 1
-            nested = 0
-            entry.number_label = str(top)
-        else:
-            nested += 1
-            entry.number_label = f'{top}.{nested}'
+    # Apply sequential numbering — all level-1
+    for i, entry in enumerate(entries, 1):
+        entry.number_label = str(i)
 
     return entries
 
@@ -914,33 +878,29 @@ class DebriefDocxGenerator:
             _add_run(p, uc_title.upper(), FONT_FAMILIES['display'], _hp(profile.subtitleSize),
                      BRAND_COLORS['pureWhite'], bold=True)
 
-        # Company name (underlined)
+        # "Participants:" label (underlined)
+        participants_label = 'Teilnehmer:' if self.language == 'de' else 'Participants:'
         p = self._add_cell_para(cell, '', space_after=profile.companyAfter)
-        _add_run(p, company_name, FONT_FAMILIES['body'], _hp(profile.companyHeaderSize),
+        _add_run(p, participants_label, FONT_FAMILIES['body'], _hp(profile.companyHeaderSize),
                  BRAND_COLORS['pureWhite'], underline=True)
 
-        # Customer participants
-        for participant in customer_participants:
+        # Customer participants — names only, sorted alphabetically
+        sorted_customer = sorted(customer_participants, key=lambda x: x.get('name', ''))
+        for participant in sorted_customer:
             name = participant.get('name', '')
-            role = participant.get('role', '')
-            text = f'{name} ({role})' if role else name
             p = self._add_cell_para(cell, '', space_after=profile.participantAfter)
-            _add_run(p, text, FONT_FAMILIES['body'], _hp(profile.participantSize),
+            _add_run(p, name, FONT_FAMILIES['body'], _hp(profile.participantSize),
                      BRAND_COLORS['pureWhite'])
 
-        # "One Thousand" header (underlined)
-        p = self._add_cell_para(cell, '', space_before=profile.oneThousandBefore,
-                                space_after=profile.oneThousandAfter)
-        _add_run(p, 'One Thousand', FONT_FAMILIES['body'], _hp(profile.companyHeaderSize),
-                 BRAND_COLORS['pureWhite'], underline=True)
+        # Blank line separator between customer and OT participants
+        self._add_cell_para(cell, '', space_before=profile.oneThousandBefore)
 
-        # OT participants
-        for participant in ot_participants:
+        # One Thousand participants — names only, sorted alphabetically
+        sorted_ot = sorted(ot_participants, key=lambda x: x.get('name', ''))
+        for participant in sorted_ot:
             name = participant.get('name', '')
-            role = participant.get('role', '')
-            text = f'{name} ({role})' if role else name
             p = self._add_cell_para(cell, '', space_after=profile.participantAfter)
-            _add_run(p, text, FONT_FAMILIES['body'], _hp(profile.participantSize),
+            _add_run(p, name, FONT_FAMILIES['body'], _hp(profile.participantSize),
                      BRAND_COLORS['pureWhite'])
 
         # Footer spacer
@@ -951,10 +911,12 @@ class DebriefDocxGenerator:
         _add_run(p, f'{company_name} x One Thousand', FONT_FAMILIES['heading'],
                  _hp(profile.footerTitleSize), BRAND_COLORS['pureWhite'], bold=True)
 
-        # Date and location
+        # Date and location — format dates as DD.MM.YYYY
         dates = metadata.get('dates')
         if dates:
-            date_str = f"{dates.get('start', '')} - {dates.get('end', '')}"
+            start_str = self._format_date_ddmmyyyy(dates.get('start', ''))
+            end_str = self._format_date_ddmmyyyy(dates.get('end', ''))
+            date_str = f'{start_str} - {end_str}'
         else:
             date_str = metadata.get('date', '')
         location = metadata.get('location', '')
@@ -1290,6 +1252,14 @@ class DebriefDocxGenerator:
     # ------------------------------------------------------------------
     # Utility
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _format_date_ddmmyyyy(date_str: str) -> str:
+        """Convert ISO date (YYYY-MM-DD) to DD.MM.YYYY. Pass through other formats."""
+        m = re.match(r'^(\d{4})-(\d{2})-(\d{2})$', date_str.strip())
+        if m:
+            return f'{m.group(3)}.{m.group(2)}.{m.group(1)}'
+        return date_str
 
     def _find_logo(self) -> Optional[str]:
         """Locate the logo PNG file."""

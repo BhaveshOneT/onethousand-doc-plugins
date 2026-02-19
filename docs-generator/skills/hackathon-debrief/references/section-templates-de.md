@@ -1,49 +1,24 @@
 # Hackathon Debrief Abschnitt-Templates — Deutsch
 
-Prompt-Vorlagen, Wortbudgets und Stilmuster für jeden Abschnitt des Hackathon-Debrief-Dokuments.
-
----
-
-## Section: participants
-
-**Title (DE):** Teilnehmer
-**Description:** Lists all participants from the client side and One Thousand team members who attended the hackathon.
-**Required Fields:** participants
-**Style Patterns:** collaborative-tone
-**Word Count:** 40–130 words
-
-### Prompt Template
-
-```
-Generate the Participants section for the hackathon debrief document.
-
-List all participants organized by organization:
-
-**Client participants ({{company.name}}):**
-{{participants.client}}
-
-**One Thousand participants:**
-{{participants.oneThousand}}
-
-Requirements:
-1. Use a clean list format with full names and roles where available.
-2. Group by organization (client first, then One Thousand).
-3. If roles or titles are provided, include them after each name.
-4. Do NOT invent or add any participants not listed in the source data.
-5. Use a professional, concise format.
-
-Output the section in {{language}} language.
-```
+Prompt-Vorlagen, Wortbudgets, Formatspezifikationen und Qualitätskriterien für jeden Abschnitt des Hackathon-Debrief-Dokuments.
 
 ---
 
 ## Section: background
 
 **Title (DE):** Hintergrund
-**Description:** Company context, AI journey framing, and introduction to the One Thousand partnership.
+**Description:** Company context, industry insight, AI opportunity, and One Thousand partnership.
 **Required Fields:** company.name, company.industry, company.background, company.aiOpportunity
 **Style Patterns:** ai-journey, collaborative-tone
 **Word Count:** 170–300 words
+**Format:** 4 bullet points (use markdown `- ` list), NOT prose paragraphs.
+
+### Format Structure
+
+1. **Branchenkontext** — 1-2 Sätze echte Branchenkenntnis, die erklären, WARUM KI in diesem Sektor relevant ist
+2. **Unternehmensspezifika** — Produkte/Dienstleistungen, Marktposition, Kennzahlen (Mitarbeiter, Standorte, Umsatz falls vorhanden)
+3. **KI-Chance** — welcher spezifische Prozess oder welche Herausforderung macht KI JETZT relevant
+4. **Partnerschaft** — wie One Thousand mit dem Unternehmen zusammenarbeitet und warum
 
 ### Prompt Template
 
@@ -56,14 +31,17 @@ Company information:
 - Background: {{company.background}}
 - AI opportunity: {{company.aiOpportunity}}
 
-Requirements:
-1. Frame the company's AI adoption as a journey (use "KI-Reise" in German or "AI journey" in English).
-2. Introduce the company with specific details from the source data (employee count, locations, products/services).
-3. Explain why AI/automation is relevant to this company's situation.
-4. Introduce the partnership with One Thousand naturally.
-5. Use collaborative tone — "wir" (we) instead of "sie" (they).
-6. CRITICAL: Only use facts from the provided source data. Do NOT invent company details, employee numbers, or revenue figures.
-7. Include the AI opportunity as the bridge to the hackathon.
+Format: Write EXACTLY 4 bullet points (markdown `- ` list):
+1. Branchenkontext — open with 1-2 sentences of genuine industry insight relevant to WHY AI matters for this company's sector.
+2. Unternehmensspezifika — what they do, products/services, market position, scale indicators.
+3. KI-Chance — what specific process or challenge makes AI relevant NOW.
+4. Partnerschaft — how One Thousand is working with them and why.
+
+Quality rules:
+- Each bullet must contain at least 2 specific facts from the source data.
+- NO generic filler like "das Unternehmen befindet sich auf einer spannenden KI-Reise" — let specifics speak.
+- Use "KI-Reise" framing naturally, not as a forced phrase.
+- CRITICAL: Only use facts from the provided source data. Do NOT invent company details, employee numbers, or revenue figures.
 
 Output the section in {{language}} language.
 ```
@@ -73,30 +51,36 @@ Output the section in {{language}} language.
 ## Section: hackathon_structure
 
 **Title (DE):** Hackathon
-**Description:** Event details including dates, location, format, and agenda overview.
+**Description:** Event details including dates, location, participant count, day structure, and atmosphere.
 **Required Fields:** metadata.title, metadata.date, metadata.location, metadata.format
 **Style Patterns:** collaborative-tone
 **Word Count:** 160–280 words
+**Format:** Opening paragraph → "Tag 1: [Untertitel]" (bold) → bullet list → "Tag 2: [Untertitel]" (bold) → bullet list → context paragraph → check-in/expectations paragraph → appreciation note.
 
 ### Prompt Template
 
 ```
-Generate the Hackathon Structure section for the debrief document.
+Generate the Hackathon section for the debrief document.
 
 Event details:
 - Title: {{metadata.title}}
 - Date: {{metadata.date}}
 - Location: {{metadata.location}}
 - Format: {{metadata.format}}
+- Participants: {{participants}}
 
-Requirements:
-1. Describe the hackathon event with specific details (date, location, format).
-2. Outline the agenda or structure of the day(s).
-3. Mention what was covered and how the day was organized.
-4. Use collaborative tone — emphasize the joint work between teams.
-5. Do NOT invent agenda items or activities not mentioned in the source data.
-6. If the format was hybrid or in-person, mention this specifically.
-7. Keep the tone professional but energetic — convey the productive atmosphere.
+Format:
+- Opening paragraph: Establish date, location, participant count, and collaborative atmosphere in ONE sentence.
+- **Tag 1: [Untertitel]** (bold heading) → bullet list of what actually happened
+- **Tag 2: [Untertitel]** (bold heading) → bullet list of what actually happened
+- Context paragraph about working environment or check-in/expectations
+- End with a genuine appreciation note about team collaboration.
+
+Quality rules:
+- Day structure should list what ACTUALLY happened, not generic agenda items.
+- Include specific activities, workshops, or milestones from the source data.
+- Do NOT invent agenda items or activities not mentioned in the source data.
+- Use collaborative tone — "Gemeinsam mit...", "Zusammen mit der wunderbaren Unterstützung durch Ihr Team..."
 
 Output the section in {{language}} language.
 ```
@@ -106,10 +90,11 @@ Output the section in {{language}} language.
 ## Section: challenge
 
 **Title (DE):** Herausforderung
-**Description:** Pain points and current process challenges that the hackathon addressed.
+**Description:** Use-case label, pain points with evidence and business impact, summary synthesis.
 **Required Fields:** useCases[0].painPoints, useCases[0].challenge, useCases[0].currentProcess
 **Style Patterns:** evidence-based
 **Word Count:** 220–360 words
+**Format:** "Use-case: [Titel]" (bold label) → introductory paragraph → "Pain" (bold label) → numbered paragraphs (1. 2. 3. ...) each with bold opening phrase + detailed explanation → summary paragraph.
 
 ### Prompt Template
 
@@ -117,18 +102,25 @@ Output the section in {{language}} language.
 Generate the Challenge section for the hackathon debrief document.
 
 Challenge information:
+- Use case title: {{useCases[0].title}}
 - Pain points: {{useCases[0].painPoints}}
 - Core challenge: {{useCases[0].challenge}}
 - Current process: {{useCases[0].currentProcess}}
 
-Requirements:
-1. Present the pain points as a numbered list with clear descriptions.
-2. Explain the current process and where it falls short.
-3. Use specific numbers and metrics from the source data where available.
-4. Frame challenges as opportunities for improvement, not criticisms.
-5. CRITICAL: Every pain point must come directly from the source data. Do NOT add generic challenges like "data silos" or "lack of visibility" unless explicitly mentioned.
-6. Connect the challenges to measurable business impact where the source data supports it.
-7. Use evidence-based language ("konkret", "messbar" in German; "specifically", "measurable" in English).
+Format:
+- Start with: **Use-case: [exakter Titel des Anwendungsfalls aus der Quelle]**
+- Einleitender Absatz mit dem geschäftlichen Kontext
+- **Pain** (bold label on its own line)
+- Numbered pain points (1. 2. 3. ...) where each follows the pattern:
+  **Fettgedruckte Eröffnungsphrase.** Spezifische Erklärung mit Zahlen/Belegen und geschäftlicher Auswirkung.
+- Summary paragraph synthesizing all pain points into a single business problem statement.
+
+Quality rules:
+- Each numbered pain point MUST contain specific details: numbers, percentages, time durations, system names, or concrete examples.
+- WRONG: "Der Prozess ist langsam und fehleranfällig."
+- RIGHT: "**Hoher manueller Aufwand.** Bei ca. 50 Angeboten pro Tag, die jeweils 2–3 Minuten erfahrener Beurteilung für Stahlsorteninterpretation, Einheitenumrechnung und Toleranzabgleich erfordern..."
+- The summary should synthesize all pains into one coherent business problem.
+- CRITICAL: Every pain point must come directly from the source data.
 
 Output the section in {{language}} language.
 ```
@@ -138,10 +130,11 @@ Output the section in {{language}} language.
 ## Section: goal
 
 **Title (DE):** Ziel
-**Description:** Primary and secondary goals of the hackathon use case.
+**Description:** Primary strategic goal, secondary goals, and success criteria.
 **Required Fields:** useCases[0].goal, useCases[0].title, useCases[0].expectedBenefits
 **Style Patterns:** collaborative-tone, evidence-based
 **Word Count:** 170–300 words
+**Format:** Primary strategic goal paragraph → solution description paragraph → "Im Rahmen des Hackathons haben wir folgende sekundäre Ziele verfolgt:" → numbered goals (1. 2. 3.) → "Erfolgskriterien für diesen Anwendungsfall:" → bullet list.
 
 ### Prompt Template
 
@@ -152,15 +145,19 @@ Goal information:
 - Use case title: {{useCases[0].title}}
 - Primary goal: {{useCases[0].goal}}
 - Expected benefits: {{useCases[0].expectedBenefits}}
+- Success criteria: {{useCases[0].successCriteria}}
 
-Requirements:
-1. State the primary goal clearly and concisely.
-2. List secondary goals or expected benefits.
-3. Connect goals to the challenges described in the previous section.
-4. Use collaborative language — "our goal was" or "unser Ziel war es".
-5. Include measurable targets where the source data provides them.
-6. CRITICAL: Do NOT invent goals or benefits not present in the source data.
-7. Frame goals positively — what we aimed to achieve, not just what we wanted to fix.
+Format:
+- Primary strategic goal paragraph — frame hackathon in company's broader strategy.
+- Solution description paragraph.
+- "Im Rahmen des Hackathons haben wir folgende sekundäre Ziele verfolgt:" → numbered list (1. 2. 3.)
+- "Erfolgskriterien für diesen Anwendungsfall:" → bullet list of testable criteria.
+
+Quality rules:
+- The primary goal should connect to business strategy, not just technical automation.
+- Secondary goals should be specific and measurable.
+- Success criteria should be testable.
+- CRITICAL: Do NOT invent goals or benefits not present in the source data.
 
 Output the section in {{language}} language.
 ```
@@ -170,10 +167,11 @@ Output the section in {{language}} language.
 ## Section: data
 
 **Title (DE):** Daten
-**Description:** Data sources used during the hackathon, including types, formats, and volumes.
+**Description:** Data sources with formats, volumes, and quality observations.
 **Required Fields:** useCases[0].dataSources
 **Style Patterns:** evidence-based
 **Word Count:** 190–320 words
+**Format:** "Für den Hackathon standen folgende Datenquellen zur Verfügung:" → hierarchical bullet list where each top-level bullet is a data source category (bold) followed by sub-bullets with specific details.
 
 ### Prompt Template
 
@@ -183,14 +181,19 @@ Generate the Data section for the hackathon debrief document.
 Data sources:
 {{useCases[0].dataSources}}
 
-Requirements:
-1. List all data sources that were used or analyzed during the hackathon.
-2. For each data source, describe: type, format, volume (if known), and relevance.
-3. Explain how the data was used in the hackathon approach.
-4. Mention any data quality observations or preprocessing steps.
-5. CRITICAL: Only list data sources explicitly mentioned in the source material. Do NOT assume the existence of data sources based on industry norms.
-6. If data volumes or formats are specified, include them with exact numbers.
-7. Use evidence-based language throughout.
+Format:
+- Opening: "Für den Hackathon standen folgende Datenquellen zur Verfügung:"
+- Hierarchical bullet list:
+  - **Datenquellenkategorie** (bold top-level bullet)
+    - Sub-bullet: Inhalt
+    - Sub-bullet: Format (JSON/PDF/Excel/API/etc.)
+    - Sub-bullet: ungefähres Volumen oder Umfang
+    - Sub-bullet: Qualitätsbeobachtungen (falls vorhanden)
+
+Quality rules:
+- For each data source, include: what it contains, format, approximate volume, and quality observations.
+- Be very specific — "Rund 15 Anfrage-E-Mails in verschiedenen Sprachen (Italienisch, Französisch, Deutsch)" is better than "Kundenanfragedaten."
+- CRITICAL: Only list data sources explicitly mentioned in the source material.
 
 Output the section in {{language}} language.
 ```
@@ -200,10 +203,11 @@ Output the section in {{language}} language.
 ## Section: approach
 
 **Title (DE):** Ansatz
-**Description:** Technical solution and methodology used during the hackathon.
+**Description:** Methodology, architecture, security considerations, technologies, and processing steps.
 **Required Fields:** useCases[0].proposedSolution, useCases[0].technicalDetails, useCases[0].dataSources
 **Style Patterns:** evidence-based
 **Word Count:** 220–360 words
+**Format:** Opening sentence → "Methodik:" paragraph → "Erster Architekturentwurf für das MVP:" paragraph + figure reference → "Sicherheit:" paragraph → "Verwendete Technologien:" → bullet list → "Verarbeitungsschritte:" → numbered list (7-10 steps) → summary paragraph.
 
 ### Prompt Template
 
@@ -214,15 +218,23 @@ Solution information:
 - Proposed solution: {{useCases[0].proposedSolution}}
 - Technical details: {{useCases[0].technicalDetails}}
 - Data sources used: {{useCases[0].dataSources}}
+- Architecture: {{useCases[0].architecture}}
+- Security considerations: {{useCases[0].security}}
 
-Requirements:
-1. Describe the technical approach step by step.
-2. Explain the methodology and tools used.
-3. Connect the approach to the data sources and challenges.
-4. Include technical details at an appropriate level — specific enough to be credible, accessible enough for non-technical stakeholders.
-5. CRITICAL: Only mention technologies, tools, and methods that are documented in the source material. Do NOT add technologies that sound impressive but were not used.
-6. Describe what was actually built or prototyped during the hackathon.
-7. Use evidence-based language and reference specific results where available.
+Format:
+- Opening sentence
+- **Methodik:** paragraph explaining chosen method and rationale
+- **Erster Architekturentwurf für das MVP:** paragraph describing architecture. If diagram provided, reference as "Abb. N:" with caption.
+- **Sicherheit:** paragraph covering data privacy and security
+- **Verwendete Technologien:** bullet list of specific technologies
+- **Verarbeitungsschritte:** numbered list (7-10 steps) tracing complete flow
+- Summary paragraph
+
+Quality rules:
+- Mention specific technologies by name.
+- Include security/privacy considerations if in source data.
+- Processing steps should trace COMPLETE flow from input to output.
+- CRITICAL: Only mention technologies documented in source material.
 
 Output the section in {{language}} language.
 ```
@@ -232,10 +244,11 @@ Output the section in {{language}} language.
 ## Section: results
 
 **Title (DE):** Ergebnisse
-**Description:** Outcomes and measurable results from the hackathon.
+**Description:** Prototype description, demo outcomes, participant feedback, feasibility statement.
 **Required Fields:** useCases[0].results, useCases[0].expectedBenefits
 **Style Patterns:** evidence-based
 **Word Count:** 220–340 words
+**Format:** Opening sentence → "Entwickelter Prototyp:" description → figure references → extra features paragraph → prototype capabilities → "Live-Demo:" paragraph → summary paragraph.
 
 ### Prompt Template
 
@@ -245,15 +258,23 @@ Generate the Results section for the hackathon debrief document.
 Results information:
 - Results: {{useCases[0].results}}
 - Expected benefits: {{useCases[0].expectedBenefits}}
+- Demo observations: {{useCases[0].demoResults}}
+- Participant feedback: {{useCases[0].participantFeedback}}
 
-Requirements:
-1. Present results with specific metrics and numbers from the source data.
-2. Distinguish between demonstrated results (what was proven) and projected benefits (what could be achieved at scale).
-3. Use concrete language — percentages, time savings, error reductions.
-4. CRITICAL: Every metric MUST come directly from the source data. Do NOT invent or estimate numbers. If a metric is not available, do not include it.
-5. Connect results back to the original goals and challenges.
-6. Highlight the most impactful findings.
-7. Use evidence-based patterns: "Die Ergebnisse zeigen konkret" (DE) or "The results specifically show" (EN).
+Format:
+- Opening sentence
+- **Entwickelter Prototyp:** description of what was built
+- Figure references for screenshots (use "Abb. N:" with captions)
+- Extra features paragraph (if any bonus capabilities)
+- Prototype capability descriptions
+- **Live-Demo:** paragraph describing what was shown and reactions
+- Summary paragraph with clear feasibility statement
+
+Quality rules:
+- Focus on what was DEMONSTRATED, not what was planned.
+- Synthesize participant feedback into coherent narrative — don't list raw feedback verbatim.
+- End with clear feasibility statement.
+- CRITICAL: Every metric MUST come directly from source data.
 
 Output the section in {{language}} language.
 ```
@@ -263,10 +284,12 @@ Output the section in {{language}} language.
 ## Section: canvas
 
 **Title (DE):** AI Breakthrough Canvas
-**Description:** Structured canvas analysis of the AI opportunity. This section is OPTIONAL — only include if canvas data is provided.
+**Description:** Structured canvas analysis. OPTIONAL — only include if user explicitly provides canvas data.
 **Required Fields:** canvas.pain, canvas.data, canvas.approach, canvas.value, canvas.risks
 **Style Patterns:** evidence-based
 **Word Count:** 240–400 words
+
+**Note:** NOT a default section. Only generate if canvas data is explicitly provided.
 
 ### Prompt Template
 
@@ -281,13 +304,10 @@ Canvas data:
 - Risks: {{canvas.risks}}
 
 Requirements:
-1. Present the canvas in a structured format with clear sections.
-2. Each canvas dimension should be a subsection with 2-4 bullet points.
-3. Connect the canvas elements to the hackathon findings.
-4. CRITICAL: Only include canvas data that was actually discussed. Do NOT fill in canvas dimensions with generic content.
-5. The canvas should tell a coherent story: pain leads to data need, data enables approach, approach delivers value, risks are managed.
-6. Use evidence-based language throughout.
-7. This section is OPTIONAL — only generate if canvas data is provided in the source material.
+1. Present canvas in structured format with clear sections.
+2. Each dimension: subsection with 2-4 bullet points.
+3. CRITICAL: Only include canvas data actually discussed.
+4. OPTIONAL — only generate if canvas data is provided.
 
 Output the section in {{language}} language.
 ```
@@ -297,10 +317,12 @@ Output the section in {{language}} language.
 ## Section: user_flow
 
 **Title (DE):** Benutzerfluss
-**Description:** Process flow description showing how the solution works from input to output. This section is OPTIONAL — only include if user flow data is provided.
+**Description:** Process flow description. OPTIONAL — only include if user explicitly provides user flow data.
 **Required Fields:** userFlow.inputSources, userFlow.steps, userFlow.outputFormat
 **Style Patterns:** evidence-based
 **Word Count:** 200–340 words
+
+**Note:** NOT a default section. Only generate if user flow data is explicitly provided.
 
 ### Prompt Template
 
@@ -313,13 +335,9 @@ User flow data:
 - Output format: {{userFlow.outputFormat}}
 
 Requirements:
-1. Describe the process flow from input to output in clear, numbered steps.
-2. For each step, explain: what happens, what technology/method is used, what the output is.
-3. Include input sources and their formats.
-4. Describe the final output and how the user interacts with it.
-5. CRITICAL: Only describe steps that were actually demonstrated or discussed. Do NOT add steps that seem logical but were not part of the hackathon.
-6. Use evidence-based language and connect to specific hackathon findings.
-7. This section is OPTIONAL — only generate if user flow data is provided in the source material.
+1. Describe process flow in clear, numbered steps.
+2. CRITICAL: Only describe steps actually demonstrated.
+3. OPTIONAL — only generate if user flow data is provided.
 
 Output the section in {{language}} language.
 ```
@@ -328,11 +346,12 @@ Output the section in {{language}} language.
 
 ## Section: conclusion
 
-**Title (DE):** Fazit und Ausblick
-**Description:** Summary of findings, recommendations, and next steps. Must include mandatory style patterns.
+**Title (DE):** Fazit
+**Description:** Strategic summary covering feasibility, vision, competitive value, and partnership commitment.
 **Required Fields:** recommendations, nextSteps, company.name
-**Style Patterns:** three-pillars, forward-looking, collaborative-tone
+**Style Patterns:** forward-looking, collaborative-tone
 **Word Count:** 220–360 words
+**Format:** 4 paragraphs: (1) Machbarkeitsnachweis, (2) Breitere Vision, (3) Strategischer/wettbewerblicher Wert, (4) Partnerschaftsbekenntnis + zukunftsorientierter Abschluss.
 
 ### Prompt Template
 
@@ -340,25 +359,25 @@ Output the section in {{language}} language.
 Generate the Conclusion section for the hackathon debrief document.
 
 Conclusion information:
+- Key findings: {{keyFindings}}
 - Recommendations: {{recommendations}}
-- Next steps: {{nextSteps}}
 - Company name: {{company.name}}
-- Three pillars phrase: {{threePillarsPhrase}}
+- Industry context: {{company.industry}}
 - Forward-looking phrase: {{forwardLookingPhrase}}
 
-Requirements:
-1. CRITICAL: The conclusion MUST begin with the three pillars phrase: {{threePillarsPhrase}}
-   - German: "Während des Hackathons haben wir uns intensiv mit den drei Hauptpfeilern beschäftigt: [pillar 1], [pillar 2] und [pillar 3]."
-   - English: "During the hackathon, we focused intensively on the three main pillars: [pillar 1], [pillar 2], and [pillar 3]."
-2. Summarize the key findings and their business impact.
-3. Present concrete recommendations based on hackathon results.
-4. Outline clear next steps with suggested timelines if available.
-5. CRITICAL: The conclusion MUST end with the forward-looking phrase: {{forwardLookingPhrase}}
-   - German: "Wir würden uns sehr freuen, diese Erfolgsgeschichte gemeinsam mit Ihnen schreiben zu dürfen!"
-   - English: "We would be delighted to write this success story together with you!"
-6. Use collaborative tone throughout — "wir" (we), "gemeinsam" (together).
-7. Connect the conclusion back to the original challenge and goals.
-8. Do NOT invent recommendations or next steps not supported by the source data.
+Format — Write EXACTLY 4 paragraphs:
+1. **Machbarkeitsnachweis** — "Der Hackathon hat gezeigt, dass KI einen konkreten Mehrwert in den täglichen Abläufen von {{company.name}} liefern kann..." Zusammenfassung des Gezeigten und Bewiesenen.
+2. **Breitere Vision** — Über den Hackathon-Anwendungsfall hinaus: Welche Transformations-Roadmap eröffnet sich? Welche angrenzenden Prozesse oder Fähigkeiten könnten folgen?
+3. **Strategischer/wettbewerblicher Wert** — Warum diese Investition im Marktumfeld des Unternehmens wichtig ist. KI-Adoption als Wettbewerbsvorteil, nicht nur Effizienz.
+4. **Partnerschaftsbekenntnis + zukunftsorientierter Abschluss** — Bekenntnis zur Partnerschaft, enden mit: {{forwardLookingPhrase}}
+
+Quality rules:
+- NO three-pillars opening required. Use ONLY if it naturally fits.
+- NO bullet lists of next steps — too tactical.
+- The conclusion should read like a strategic executive summary.
+- Include genuine industry context in the strategic paragraph.
+- CRITICAL: MUST end with forward-looking phrase.
+- Do NOT invent recommendations not supported by source data.
 
 Output the section in {{language}} language.
 ```

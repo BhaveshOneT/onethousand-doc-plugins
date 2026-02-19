@@ -6,9 +6,11 @@ These are the 5 critical patterns that MUST be enforced in every hackathon debri
 
 ## 1. Three Pillars Structure (`three-pillars`)
 
-**Enforcement:** Required
+**Enforcement:** Optional
 
-The conclusion MUST reference the three main pillars of the hackathon work.
+The conclusion MAY reference the three main pillars of the hackathon work, but this structure is NOT required. Reference documents show that the three-pillars opening is not consistently used. The conclusion should be strategic and visionary — use the three-pillars structure only if it naturally fits the hackathon's narrative.
+
+What IS required for the conclusion: (1) feasibility proof, (2) broader transformation vision, (3) competitive/strategic value, (4) partnership commitment with forward-looking ending.
 
 ### German Patterns
 - "Während des Hackathons haben wir uns intensiv mit den drei Hauptpfeilern beschäftigt"
@@ -27,7 +29,7 @@ The conclusion MUST reference the three main pillars of the hackathon work.
 > During the hackathon, we focused intensively on the three main pillars: analyzing existing processes, identifying AI potential, and prototyping an initial solution.
 
 ### Verification
-Pattern must contain: `drei Hauptpfeilern` (DE) or `three main pillars` (EN)
+When used, pattern should contain: `drei Hauptpfeilern` (DE) or `three main pillars` (EN). Not required in every document.
 
 ---
 
@@ -50,6 +52,11 @@ The document MUST end with the collaborative success story phrase.
 
 ### Example (EN)
 > The hackathon results demonstrate the enormous potential for your company. We would be delighted to write this success story together with you!
+
+### Acceptable Variations
+- "Wir würden uns sehr freuen, diese Erfolgsgeschichte gemeinsam mit Ihnen weiterschreiben zu dürfen!" (DE)
+- "We would be delighted to continue writing this success story together with you!" (EN)
+- "continue writing" / "weiterschreiben" are acceptable variants of the standard phrase
 
 ### Verification
 Pattern must contain: `Erfolgsgeschichte gemeinsam mit Ihnen` (DE) or `success story together with you` (EN)
@@ -147,9 +154,10 @@ Custom check: all metrics in output must exist in source data
 
 ### Stilrichtlinien für Hackathon-Debrief-Dokumente
 
-#### 1. Drei-Säulen-Struktur
-Die Zusammenfassung MUSS mit folgendem Satz beginnen:
+#### 1. Drei-Säulen-Struktur (Optional)
+Die Zusammenfassung KANN mit folgendem Satz beginnen:
 "Während des Hackathons haben wir uns intensiv mit den drei Hauptpfeilern beschäftigt"
+Diese Struktur ist optional — verwenden Sie sie nur, wenn sie zum Narrativ passt. Das Fazit muss stattdessen abdecken: (1) Machbarkeitsnachweis, (2) breitere Transformationsvision, (3) strategischen/wettbewerblichen Wert, (4) Partnerschaftsbekenntnis.
 
 #### 2. Zukunftsorientierter Abschluss
 Das Dokument MUSS mit folgendem Satz enden:
@@ -182,9 +190,10 @@ Der Hintergrund-Abschnitt sollte die KI-Adoption als Reise darstellen:
 
 ### Style Guidelines for Hackathon Debrief Documents
 
-#### 1. Three Pillars Structure
-The conclusion MUST begin with:
+#### 1. Three Pillars Structure (Optional)
+The conclusion MAY begin with:
 "During the hackathon, we focused intensively on the three main pillars"
+This structure is optional — use it only if it naturally fits the narrative. The conclusion must instead cover: (1) feasibility proof, (2) broader transformation vision, (3) competitive/strategic value, (4) partnership commitment.
 
 #### 2. Forward-Looking Ending
 The document MUST end with:
