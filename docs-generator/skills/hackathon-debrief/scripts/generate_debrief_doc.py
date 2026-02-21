@@ -32,7 +32,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from docx import Document
 from docx.enum.section import WD_SECTION_START
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_LINE_SPACING
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Inches, Mm, Pt, Twips, RGBColor
@@ -61,6 +61,7 @@ FONT_FAMILIES = {
     'heading': 'Amsi Pro Narw Black',
     'body': 'Akkurat LL',
     'display': 'Amsi Pro Narw Black',
+    'display_title': 'Wavetable',
     'mono': 'Consolas',
 }
 
@@ -69,7 +70,7 @@ PAGE_SIZE_A4 = {
     'height': Mm(297),  # 16838 twips
 }
 
-TABLE_HEIGHT_INCHES = 10.5
+TABLE_ROW_HEIGHT_TWIPS = 17600
 
 SECTION_ORDER: List[str] = [
     'background',
@@ -125,27 +126,27 @@ class TitlePageProfile:
 
 
 PROFILE_DEFAULT = TitlePageProfile(
-    logoSize=80, logoAfter=400, titleSpacerBefore=1100, titleSize=96,
-    debriefAfter=400, subtitleSize=48, subtitleAfter=600,
-    companyHeaderSize=22, companyAfter=100, participantSize=20, participantAfter=40,
-    oneThousandBefore=200, oneThousandAfter=100,
-    footerBefore=800, footerTitleSize=28, dateSize=22,
-)
-
-PROFILE_MEDIUM = TitlePageProfile(
-    logoSize=72, logoAfter=300, titleSpacerBefore=500, titleSize=88,
+    logoSize=54, logoAfter=300, titleSpacerBefore=500, titleSize=72,
     debriefAfter=240, subtitleSize=44, subtitleAfter=320,
-    companyHeaderSize=20, companyAfter=70, participantSize=18, participantAfter=20,
-    oneThousandBefore=100, oneThousandAfter=60,
+    companyHeaderSize=20, companyAfter=70, participantSize=20, participantAfter=20,
+    oneThousandBefore=20, oneThousandAfter=20,
     footerBefore=420, footerTitleSize=24, dateSize=20,
 )
 
+PROFILE_MEDIUM = TitlePageProfile(
+    logoSize=48, logoAfter=240, titleSpacerBefore=300, titleSize=64,
+    debriefAfter=180, subtitleSize=40, subtitleAfter=240,
+    companyHeaderSize=18, companyAfter=50, participantSize=18, participantAfter=14,
+    oneThousandBefore=14, oneThousandAfter=14,
+    footerBefore=300, footerTitleSize=22, dateSize=18,
+)
+
 PROFILE_COMPACT = TitlePageProfile(
-    logoSize=64, logoAfter=220, titleSpacerBefore=300, titleSize=78,
-    debriefAfter=160, subtitleSize=38, subtitleAfter=220,
-    companyHeaderSize=18, companyAfter=60, participantSize=16, participantAfter=10,
-    oneThousandBefore=70, oneThousandAfter=50,
-    footerBefore=220, footerTitleSize=22, dateSize=18,
+    logoSize=42, logoAfter=180, titleSpacerBefore=200, titleSize=56,
+    debriefAfter=120, subtitleSize=36, subtitleAfter=180,
+    companyHeaderSize=16, companyAfter=40, participantSize=16, participantAfter=10,
+    oneThousandBefore=10, oneThousandAfter=10,
+    footerBefore=200, footerTitleSize=20, dateSize=16,
 )
 
 
@@ -154,9 +155,9 @@ def _get_title_page_profile(
     company_name_length: int,
 ) -> TitlePageProfile:
     """Select adaptive sizing profile based on participant count and company name length."""
-    if participant_count > 18 or company_name_length > 40:
+    if participant_count > 20 or company_name_length > 40:
         return PROFILE_COMPACT
-    if participant_count > 10 or company_name_length > 28:
+    if participant_count > 14 or company_name_length > 30:
         return PROFILE_MEDIUM
     return PROFILE_DEFAULT
 
@@ -543,7 +544,7 @@ def _set_cell_margins(cell, top: int, bottom: int, left: int, right: int) -> Non
     """Set cell margins in twips."""
     tc_pr = cell._element.get_or_add_tcPr()
     margins = OxmlElement('w:tcMar')
-    for side, val in [('top', top), ('bottom', bottom), ('start', left), ('end', right)]:
+    for side, val in [('top', top), ('left', left), ('bottom', bottom), ('right', right)]:
         el = OxmlElement(f'w:{side}')
         el.set(qn('w:w'), str(val))
         el.set(qn('w:type'), 'dxa')
@@ -551,13 +552,13 @@ def _set_cell_margins(cell, top: int, bottom: int, left: int, right: int) -> Non
     tc_pr.append(margins)
 
 
-def _set_row_height(row, twips: int) -> None:
-    """Set table row height to EXACT value."""
+def _set_row_height(row, twips: int, rule: str = 'exact') -> None:
+    """Set table row height. Rule can be 'exact' or 'atLeast'."""
     tr = row._tr
     tr_pr = tr.get_or_add_trPr()
     tr_height = OxmlElement('w:trHeight')
     tr_height.set(qn('w:val'), str(twips))
-    tr_height.set(qn('w:hRule'), 'exact')
+    tr_height.set(qn('w:hRule'), rule)
     tr_pr.append(tr_height)
 
 
@@ -728,6 +729,65 @@ def _add_run(
     return run
 
 
+def _add_display_run(
+    paragraph,
+    text: str,
+    ascii_font: Optional[str] = None,
+    east_font: Optional[str] = None,
+    size_hp: Optional[int] = None,
+    size_cs_hp: Optional[int] = None,
+    color: Optional[str] = None,
+    bold: bool = False,
+    underline: bool = False,
+):
+    """Add a run with explicit font-slot control (matching reference template).
+
+    Unlike ``_add_run`` which sets ``font.name`` (ascii slot), this helper
+    lets you set ascii/hAnsi and eastAsia/cs independently — required for
+    the title page where Wavetable is used for Latin text while Amsi Pro
+    Narw Black is kept for eastAsia/cs slots.
+    """
+    run = paragraph.add_run(text)
+    rPr = run._element.get_or_add_rPr()
+
+    if ascii_font or east_font:
+        rFonts = OxmlElement('w:rFonts')
+        if ascii_font:
+            rFonts.set(qn('w:ascii'), ascii_font)
+            rFonts.set(qn('w:hAnsi'), ascii_font)
+        if east_font:
+            rFonts.set(qn('w:eastAsia'), east_font)
+            rFonts.set(qn('w:cs'), east_font)
+        rPr.append(rFonts)
+
+    if size_hp is not None:
+        sz = OxmlElement('w:sz')
+        sz.set(qn('w:val'), str(size_hp))
+        rPr.append(sz)
+    if size_cs_hp is not None:
+        szCs = OxmlElement('w:szCs')
+        szCs.set(qn('w:val'), str(size_cs_hp))
+        rPr.append(szCs)
+
+    if color:
+        c = OxmlElement('w:color')
+        c.set(qn('w:val'), color)
+        rPr.append(c)
+
+    if bold:
+        b = OxmlElement('w:b')
+        rPr.append(b)
+        bCs = OxmlElement('w:bCs')
+        rPr.append(bCs)
+
+    if underline:
+        u = OxmlElement('w:u')
+        u.set(qn('w:val'), 'single')
+        rPr.append(u)
+
+    return run
+
+
 def _hp(val: int) -> Pt:
     """Convert half-points (docx.js convention) to Pt for python-docx."""
     return Pt(val / 2)
@@ -758,6 +818,11 @@ class DebriefDocxGenerator:
         """Build the document and save to *output_path*."""
         doc = Document()
 
+        # Fix compatibility mode: python-docx defaults to Word 2010 (mode 14)
+        # which doesn't properly honour cell-level tcMar margins.
+        # Mode 15 (Word 2013+) renders them correctly.
+        self._fix_compat_settings(doc)
+
         # Configure document-level defaults and styles to match brand
         self._configure_document_defaults(doc)
         self._configure_styles(doc)
@@ -765,9 +830,11 @@ class DebriefDocxGenerator:
         # ---- Section 1: Title page ----
         self._setup_title_section(doc)
         self._build_title_page_table(doc)
-        self._add_section_terminator(doc)
 
-        # ---- Section 2: Content (CONTINUOUS break) ----
+        # ---- Section 2: Content ----
+        # CONTINUOUS break: the section-break paragraph overflows from the
+        # full-bleed table to page 2, and CONTINUOUS lets the TOC start
+        # immediately on that same page — no blank page in between.
         new_section = doc.add_section(WD_SECTION_START.CONTINUOUS)
         new_section.page_width = PAGE_SIZE_A4['width']
         new_section.page_height = PAGE_SIZE_A4['height']
@@ -803,12 +870,7 @@ class DebriefDocxGenerator:
         fld_char_end.set(qn('w:fldCharType'), 'end')
         run._element.append(fld_char_end)
 
-        # PageBreak to force TOC onto new page
-        pb_para = doc.add_paragraph()
-        run = pb_para.add_run()
-        run.add_break(WD_BREAK.PAGE)
-
-        # TOC title
+        # TOC title (NEW_PAGE break already starts new page — no explicit page break needed)
         self._add_toc_title(doc)
 
         # Static TOC
@@ -826,6 +888,44 @@ class DebriefDocxGenerator:
         os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
         doc.save(output_path)
         print(f'Successfully generated: {output_path}')
+
+    # ------------------------------------------------------------------
+    # Document compat settings
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _fix_compat_settings(doc: Document) -> None:
+        """Set Word 2013+ compatibility mode and remove useFELayout.
+
+        python-docx creates documents in Word 2010 mode (compatibilityMode=14)
+        with useFELayout enabled.  Word 2010 mode does not honour cell-level
+        tcMar margins — the fix is to switch to mode 15 (Word 2013+) and
+        remove the Far East layout flag.
+        """
+        settings = doc.settings.element
+        compat = settings.find(qn('w:compat'))
+        if compat is None:
+            compat = OxmlElement('w:compat')
+            settings.append(compat)
+
+        # Remove useFELayout (Far East layout — not needed, breaks margins)
+        for fe in compat.findall(qn('w:useFELayout')):
+            compat.remove(fe)
+
+        # Update compatibilityMode from 14 → 15
+        uri = 'http://schemas.microsoft.com/office/word'
+        for cs in compat.findall(qn('w:compatSetting')):
+            if (cs.get(qn('w:name')) == 'compatibilityMode'
+                    and cs.get(qn('w:uri')) == uri):
+                cs.set(qn('w:val'), '15')
+                break
+        else:
+            # No existing compatibilityMode — add one
+            cs = OxmlElement('w:compatSetting')
+            cs.set(qn('w:name'), 'compatibilityMode')
+            cs.set(qn('w:uri'), uri)
+            cs.set(qn('w:val'), '15')
+            compat.append(cs)
 
     # ------------------------------------------------------------------
     # Document defaults & styles (matches reference template)
@@ -903,27 +1003,46 @@ class DebriefDocxGenerator:
     def _configure_styles(doc: Document) -> None:
         """Configure Heading 1/2/3 styles to match the reference template."""
 
-        def _set_style_font(style, font_name, size_hp, color_val, bold=None):
-            """Configure a style's font via XML for full control."""
+        def _set_style_font(
+            style, east_font, size_hp, color_val,
+            bold=None, bold_cs=False, size_cs_hp=None,
+            ascii_font=None, hAnsi_font=None,
+        ):
+            """Configure a style's font via XML for full control.
+
+            By default only sets eastAsia/cs font slots — Latin text inherits
+            from docDefaults (Akkurat LL).  Pass *ascii_font*/*hAnsi_font*
+            to override Latin font slots (used only for Heading 3).
+            """
             se = style.element
             rPr = se.find(qn('w:rPr'))
             if rPr is None:
                 rPr = OxmlElement('w:rPr')
                 se.append(rPr)
 
-            # Font (eastAsia slot for heading family — matches reference)
+            # Font slots
             for existing in rPr.findall(qn('w:rFonts')):
                 rPr.remove(existing)
             rFonts = OxmlElement('w:rFonts')
-            rFonts.set(qn('w:eastAsia'), font_name)
+            if ascii_font:
+                rFonts.set(qn('w:ascii'), ascii_font)
+            if hAnsi_font:
+                rFonts.set(qn('w:hAnsi'), hAnsi_font)
+            rFonts.set(qn('w:eastAsia'), east_font)
+            rFonts.set(qn('w:cs'), east_font)
             rPr.append(rFonts)
 
-            # Size
+            # Size (sz + szCs)
             for existing in rPr.findall(qn('w:sz')):
                 rPr.remove(existing)
             sz = OxmlElement('w:sz')
             sz.set(qn('w:val'), str(size_hp))
             rPr.append(sz)
+            for existing in rPr.findall(qn('w:szCs')):
+                rPr.remove(existing)
+            szCs = OxmlElement('w:szCs')
+            szCs.set(qn('w:val'), str(size_cs_hp or size_hp))
+            rPr.append(szCs)
 
             # Color (remove theme-based color, set explicit)
             for existing in rPr.findall(qn('w:color')):
@@ -932,13 +1051,18 @@ class DebriefDocxGenerator:
             c.set(qn('w:val'), color_val)
             rPr.append(c)
 
-            # Bold
-            if bold is not None:
-                for existing in rPr.findall(qn('w:b')):
-                    rPr.remove(existing)
-                if bold:
-                    b = OxmlElement('w:b')
-                    rPr.append(b)
+            # Bold — always remove existing w:b first, then set if requested
+            for existing in rPr.findall(qn('w:b')):
+                rPr.remove(existing)
+            if bold:
+                b = OxmlElement('w:b')
+                rPr.append(b)
+            # Bold complex-script
+            for existing in rPr.findall(qn('w:bCs')):
+                rPr.remove(existing)
+            if bold_cs or bold:
+                bCs = OxmlElement('w:bCs')
+                rPr.append(bCs)
 
         def _set_style_spacing(style, before=None, after=None):
             """Configure a style's paragraph spacing."""
@@ -959,25 +1083,24 @@ class DebriefDocxGenerator:
         green = BRAND_COLORS['sharpGreen']
         heading_font = FONT_FAMILIES['heading']
 
-        # Heading 1: 16pt, green, Amsi Pro Narw Black, before=400
+        # Heading 1: 16pt green, NOT bold for Latin, bCs only.
+        # eastAsia/cs = Amsi Pro Narw Black; ascii/hAnsi inherit Akkurat LL.
         h1 = doc.styles['Heading 1']
-        _set_style_font(h1, heading_font, 32, green)
+        _set_style_font(h1, heading_font, 32, green, bold=False, bold_cs=True)
         _set_style_spacing(h1, before=400)
 
-        # Heading 2: 14pt, green, bold, before=300, after=150
+        # Heading 2: 14pt green, bold + bCs.
+        # eastAsia/cs = Amsi Pro Narw Black; ascii/hAnsi inherit Akkurat LL.
         h2 = doc.styles['Heading 2']
         _set_style_font(h2, heading_font, 28, green, bold=True)
         _set_style_spacing(h2, before=300, after=150)
 
-        # Heading 3: 12pt, green, bold, Amsi Pro Narw Black (all slots), before=200, after=100
+        # Heading 3: 12pt green, bold + bCs, ALL font slots = Amsi Pro Narw Black.
         h3 = doc.styles['Heading 3']
-        _set_style_font(h3, heading_font, 24, green, bold=True)
-        # Heading 3 in reference has all font slots set
-        se = h3.element
-        rPr = se.find(qn('w:rPr'))
-        rFonts = rPr.find(qn('w:rFonts'))
-        rFonts.set(qn('w:ascii'), heading_font)
-        rFonts.set(qn('w:hAnsi'), heading_font)
+        _set_style_font(
+            h3, heading_font, 24, green, bold=True,
+            ascii_font=heading_font, hAnsi_font=heading_font,
+        )
         _set_style_spacing(h3, before=200, after=100)
 
         # Create bullet numbering definition for ListParagraph
@@ -1040,7 +1163,13 @@ class DebriefDocxGenerator:
         section.right_margin = Twips(0)
 
     def _build_title_page_table(self, doc: Document) -> None:
-        """Create the single-cell green table that forms the cover page."""
+        """Create the single-cell green table that forms the cover page.
+
+        Layout and font choices match Montanstahl_Original.docx exactly:
+        - Wavetable font for "hackathon"/"debrief" and "Company x One Thousand"
+        - Akkurat LL (inherited from docDefaults) for subtitle, participants, date
+        - Cell margins 1440 dxa (1 inch), row height 17600 twips
+        """
         data = self.content.get('structuredData', self.content)
         company_name = data.get('company', {}).get('name', '')
         customer_participants = data.get('participants', {}).get('customer', [])
@@ -1050,67 +1179,117 @@ class DebriefDocxGenerator:
         metadata = data.get('metadata', {})
         use_cases = data.get('useCases', [])
 
-        # Create table 1x1
+        wavetable = FONT_FAMILIES['display_title']
+        amsi = FONT_FAMILIES['heading']
+        white = BRAND_COLORS['pureWhite']
+
+        # Create table 1x1 and rebuild tblPr from scratch to match
+        # the reference XML exactly (order, attributes, no jc=center).
         table = doc.add_table(rows=1, cols=1)
-        table.alignment = WD_TABLE_ALIGNMENT.CENTER
-        # Full width
+
         tbl = table._tbl
-        tbl_pr = tbl.tblPr
+        # Remove python-docx's auto-generated tblPr entirely
+        old_pr = tbl.tblPr
+        tbl.remove(old_pr)
+        # Build tblPr matching reference element order exactly:
+        # tblW → tblBorders → tblCellMar → tblLook
+        tbl_pr = OxmlElement('w:tblPr')
+        tbl.insert(0, tbl_pr)
+
         tbl_w = OxmlElement('w:tblW')
         tbl_w.set(qn('w:w'), '5000')
         tbl_w.set(qn('w:type'), 'pct')
-        existing_w = tbl_pr.find(qn('w:tblW'))
-        if existing_w is not None:
-            tbl_pr.remove(existing_w)
         tbl_pr.append(tbl_w)
 
-        _remove_table_borders(table)
+        # Borders: all none (reference uses w:color="FFFFFF")
+        tbl_borders = OxmlElement('w:tblBorders')
+        for side in ('top', 'left', 'bottom', 'right', 'insideH', 'insideV'):
+            b = OxmlElement(f'w:{side}')
+            b.set(qn('w:val'), 'none')
+            b.set(qn('w:sz'), '0')
+            b.set(qn('w:space'), '0')
+            b.set(qn('w:color'), 'FFFFFF')
+            tbl_borders.append(b)
+        tbl_pr.append(tbl_borders)
+
+        tbl_cell_mar = OxmlElement('w:tblCellMar')
+        for side, val in [('left', 10), ('right', 10)]:
+            el = OxmlElement(f'w:{side}')
+            el.set(qn('w:w'), str(val))
+            el.set(qn('w:type'), 'dxa')
+            tbl_cell_mar.append(el)
+        tbl_pr.append(tbl_cell_mar)
+
+        tbl_look = OxmlElement('w:tblLook')
+        tbl_look.set(qn('w:val'), '0000')
+        for attr in ('firstRow', 'lastRow', 'firstColumn', 'lastColumn', 'noHBand', 'noVBand'):
+            tbl_look.set(qn(f'w:{attr}'), '0')
+        tbl_pr.append(tbl_look)
+
+        # gridCol: must be 11906 (full A4 width), not python-docx's 9026
+        tbl_grid = tbl.find(qn('w:tblGrid'))
+        if tbl_grid is not None:
+            for gc in tbl_grid.findall(qn('w:gridCol')):
+                gc.set(qn('w:w'), '11906')
 
         row = table.rows[0]
-        _set_row_height(row, int(Inches(TABLE_HEIGHT_INCHES)))
+        _set_row_height(row, TABLE_ROW_HEIGHT_TWIPS)
+        # cantSplit (matches reference)
+        tr_pr = row._tr.get_or_add_trPr()
+        cant_split = OxmlElement('w:cantSplit')
+        tr_pr.append(cant_split)
 
         cell = row.cells[0]
         _set_cell_shading(cell, BRAND_COLORS['sharpGreen'])
-        _set_cell_margins(cell,
-                          top=int(Inches(1)),
-                          bottom=int(Inches(1)),
-                          left=int(Inches(1)),
-                          right=int(Inches(1)))
+        # Override cell width to auto (reference uses w:w="0" w:type="auto")
+        # python-docx defaults to dxa with calculated width that's too narrow
+        tc_pr = cell._element.get_or_add_tcPr()
+        existing_tcW = tc_pr.find(qn('w:tcW'))
+        if existing_tcW is not None:
+            tc_pr.remove(existing_tcW)
+        tcW = OxmlElement('w:tcW')
+        tcW.set(qn('w:w'), '0')
+        tcW.set(qn('w:type'), 'auto')
+        tc_pr.insert(0, tcW)
+        # Cell margins: 1440 dxa = 1 inch (NOT Inches() which returns EMU)
+        _set_cell_margins(cell, top=1440, bottom=1440, left=1440, right=1440)
 
         # Remove default empty paragraph from cell
         for p in cell.paragraphs:
             p_elem = p._element
             p_elem.getparent().remove(p_elem)
 
-        # ---- Cell contents ----
+        # ---- Cell contents (hackathon-web TS layout + adaptive sizing) ----
 
-        # Logo
+        # Logo (right-aligned)
         logo_path = self._find_logo()
         if logo_path:
             p = OxmlElement('w:p')
             cell._element.append(p)
             para = cell.paragraphs[-1]
             para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-            pf = para.paragraph_format
-            pf.space_after = Twips(profile.logoAfter)
-            pf.space_before = Twips(0)
+            _set_paragraph_spacing(para, after=profile.logoAfter)
             run = para.add_run()
             run.add_picture(logo_path, width=Pt(profile.logoSize), height=Pt(profile.logoSize))
 
-        # Spacer
+        # Spacer before title
         self._add_cell_para(cell, '', space_before=profile.titleSpacerBefore)
 
-        # "hackathon"
+        # "hackathon" — Wavetable (ascii/hAnsi), Amsi (eastAsia/cs)
         p = self._add_cell_para(cell, '', space_after=0)
-        _add_run(p, 'hackathon', FONT_FAMILIES['display'], _hp(profile.titleSize),
-                 BRAND_COLORS['pureWhite'], bold=True)
+        _add_display_run(p, 'hackathon',
+                         ascii_font=wavetable, east_font=amsi,
+                         size_hp=profile.titleSize, size_cs_hp=profile.titleSize,
+                         color=white, bold=True)
 
-        # "debrief"
+        # "debrief" — same font treatment
         p = self._add_cell_para(cell, '', space_after=profile.debriefAfter)
-        _add_run(p, 'debrief', FONT_FAMILIES['display'], _hp(profile.titleSize),
-                 BRAND_COLORS['pureWhite'], bold=True)
+        _add_display_run(p, 'debrief',
+                         ascii_font=wavetable, east_font=amsi,
+                         size_hp=profile.titleSize, size_cs_hp=profile.titleSize,
+                         color=white, bold=True)
 
-        # Use case title (uppercase)
+        # Use case subtitle (uppercase)
         uc_title = ''
         if use_cases:
             uc_title = use_cases[0].get('title', '')
@@ -1118,43 +1297,61 @@ class DebriefDocxGenerator:
             uc_title = metadata.get('title', '')
         if uc_title:
             p = self._add_cell_para(cell, '', space_after=profile.subtitleAfter)
-            _add_run(p, uc_title.upper(), FONT_FAMILIES['display'], _hp(profile.subtitleSize),
-                     BRAND_COLORS['pureWhite'], bold=True)
+            _add_display_run(p, uc_title.upper(),
+                             ascii_font=amsi, east_font=amsi,
+                             size_hp=profile.subtitleSize, size_cs_hp=profile.subtitleSize,
+                             color=white, bold=True)
 
-        # "Participants:" label (underlined)
-        participants_label = 'Teilnehmer:' if self.language == 'de' else 'Participants:'
-        p = self._add_cell_para(cell, '', space_after=profile.companyAfter)
-        _add_run(p, participants_label, FONT_FAMILIES['body'], _hp(profile.companyHeaderSize),
-                 BRAND_COLORS['pureWhite'], underline=True)
+        # Company name as section header (underlined)
+        p = self._add_cell_para(cell, '', space_after=100)
+        _add_display_run(p, company_name,
+                         size_hp=profile.companyHeaderSize,
+                         size_cs_hp=profile.companyHeaderSize,
+                         color=white, underline=True)
 
-        # Customer participants — names only, sorted alphabetically
+        # Customer participants — name (role), no indent
         sorted_customer = sorted(customer_participants, key=lambda x: x.get('name', ''))
         for participant in sorted_customer:
             name = participant.get('name', '')
+            role = participant.get('role', '')
+            display = f'{name} ({role})' if role else name
             p = self._add_cell_para(cell, '', space_after=profile.participantAfter)
-            _add_run(p, name, FONT_FAMILIES['body'], _hp(profile.participantSize),
-                     BRAND_COLORS['pureWhite'])
+            _add_display_run(p, display,
+                             size_hp=profile.participantSize,
+                             size_cs_hp=profile.participantSize,
+                             color=white)
 
-        # Blank line separator between customer and OT participants
-        self._add_cell_para(cell, '', space_before=profile.oneThousandBefore)
+        # "One Thousand" section header (underlined)
+        p = self._add_cell_para(cell, '', space_before=200, space_after=100)
+        _add_display_run(p, 'One Thousand',
+                         size_hp=profile.companyHeaderSize,
+                         size_cs_hp=profile.companyHeaderSize,
+                         color=white, underline=True)
 
-        # One Thousand participants — names only, sorted alphabetically
+        # One Thousand participants — name (role), no indent
         sorted_ot = sorted(ot_participants, key=lambda x: x.get('name', ''))
         for participant in sorted_ot:
             name = participant.get('name', '')
+            role = participant.get('role', '')
+            display = f'{name} ({role})' if role else name
             p = self._add_cell_para(cell, '', space_after=profile.participantAfter)
-            _add_run(p, name, FONT_FAMILIES['body'], _hp(profile.participantSize),
-                     BRAND_COLORS['pureWhite'])
+            _add_display_run(p, display,
+                             size_hp=profile.participantSize,
+                             size_cs_hp=profile.participantSize,
+                             color=white)
 
         # Footer spacer
         self._add_cell_para(cell, '', space_before=profile.footerBefore)
 
-        # "Company x One Thousand"
+        # "Company x One Thousand" — Wavetable (ascii/hAnsi), Amsi (eastAsia/cs)
         p = self._add_cell_para(cell, '', space_after=100)
-        _add_run(p, f'{company_name} x One Thousand', FONT_FAMILIES['heading'],
-                 _hp(profile.footerTitleSize), BRAND_COLORS['pureWhite'], bold=True)
+        _add_display_run(p, f'{company_name} x One Thousand',
+                         ascii_font=wavetable, east_font=amsi,
+                         size_hp=profile.footerTitleSize,
+                         size_cs_hp=profile.footerTitleSize,
+                         color=white, bold=True)
 
-        # Date and location — format dates as DD.MM.YYYY
+        # Date and location
         dates = metadata.get('dates')
         if dates:
             start_str = self._format_date_ddmmyyyy(dates.get('start', ''))
@@ -1166,8 +1363,9 @@ class DebriefDocxGenerator:
         location_date = f'{location}, {date_str}' if location else date_str
 
         p = self._add_cell_para(cell, '')
-        _add_run(p, location_date, FONT_FAMILIES['body'], _hp(profile.dateSize),
-                 BRAND_COLORS['pureWhite'], bold=True)
+        _add_display_run(p, location_date,
+                         size_hp=profile.dateSize, size_cs_hp=profile.dateSize,
+                         color=white, bold=True)
 
     def _add_cell_para(
         self,
@@ -1176,40 +1374,57 @@ class DebriefDocxGenerator:
         space_before: int = 0,
         space_after: int = 0,
     ):
-        """Add a paragraph to a table cell with spacing (in twips)."""
+        """Add a paragraph to a table cell with spacing (in twips).
+
+        Only sets ``space_before`` / ``space_after`` when non-zero to keep the
+        XML clean (Word treats omitted values as 0).
+        """
         p_elem = OxmlElement('w:p')
         cell._element.append(p_elem)
         para = cell.paragraphs[-1]
-        pf = para.paragraph_format
-        pf.space_before = Twips(space_before)
-        pf.space_after = Twips(space_after)
+        # Use raw XML; always emit 'after' to override docDefault after=200.
+        # Only emit 'before' when non-zero (matches reference pattern).
+        pPr = para._element.get_or_add_pPr()
+        sp = OxmlElement('w:spacing')
+        if space_before:
+            sp.set(qn('w:before'), str(space_before))
+        sp.set(qn('w:after'), str(space_after))
+        pPr.append(sp)
         if text:
             _add_run(para, text)
         return para
 
-    def _add_section_terminator(self, doc: Document) -> None:
-        """Add a tiny paragraph after the table to prevent a blank page."""
-        para = doc.add_paragraph()
-        run = para.add_run('')
-        run.font.size = Pt(1)  # tiny
-        pf = para.paragraph_format
-        pf.space_before = Twips(0)
-        pf.space_after = Twips(0)
-        pf.line_spacing_rule = WD_LINE_SPACING.EXACTLY
-        pf.line_spacing = Twips(20)
+    @staticmethod
+    def _set_para_indent(para, left: int = 0) -> None:
+        """Set paragraph left indent in twips (dxa)."""
+        p_elem = para._element
+        pPr = p_elem.get_or_add_pPr()
+        # Remove existing indent
+        for existing in pPr.findall(qn('w:ind')):
+            pPr.remove(existing)
+        if left:
+            ind = OxmlElement('w:ind')
+            ind.set(qn('w:left'), str(left))
+            pPr.append(ind)
 
     # ------------------------------------------------------------------
     # Section 2: TOC
     # ------------------------------------------------------------------
 
     def _add_toc_title(self, doc: Document) -> None:
-        """Add the TOC heading."""
+        """Add the TOC heading.
+
+        Reference uses eastAsia=Amsi Pro Narw Black only (ascii/hAnsi inherit
+        Akkurat LL from docDefaults).  sz=56 (28pt), green, bold.
+        """
         title = 'INHALTSVERZEICHNIS' if self.language == 'de' else 'TABLE OF CONTENTS'
         para = doc.add_paragraph()
         pf = para.paragraph_format
         pf.space_after = Twips(600)
-        _add_run(para, title, FONT_FAMILIES['display'], Pt(28),
-                 BRAND_COLORS['sharpGreen'], bold=True)
+        _add_display_run(para, title,
+                         east_font=FONT_FAMILIES['heading'],
+                         size_hp=56, size_cs_hp=56,
+                         color=BRAND_COLORS['sharpGreen'], bold=True)
 
     def _add_static_toc(self, doc: Document) -> None:
         """Build clickable TOC entries with dotted tab leaders."""

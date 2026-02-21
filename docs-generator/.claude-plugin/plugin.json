@@ -1,6 +1,6 @@
 {
   "name": "docs-generator",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "hooks": "./hooks/hooks.json",
   "description": "Professional document generation plugin with One Thousand branding. Generates scope documents, hackathon debrief documents (DOCX), hackathon presentations (PPTX), sprint design plans (Confluence), proposals, and client-facing deliverables from hackathon summaries and project briefs. Includes confidence-scored content, iterative quality review, and anti-hallucination verification. Supports English and German.",
   "author": {
