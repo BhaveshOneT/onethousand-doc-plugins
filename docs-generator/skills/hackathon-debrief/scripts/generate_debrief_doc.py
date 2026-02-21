@@ -758,6 +758,10 @@ class DebriefDocxGenerator:
         """Build the document and save to *output_path*."""
         doc = Document()
 
+        # Configure document-level defaults and styles to match brand
+        self._configure_document_defaults(doc)
+        self._configure_styles(doc)
+
         # ---- Section 1: Title page ----
         self._setup_title_section(doc)
         self._build_title_page_table(doc)
@@ -822,6 +826,204 @@ class DebriefDocxGenerator:
         os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
         doc.save(output_path)
         print(f'Successfully generated: {output_path}')
+
+    # ------------------------------------------------------------------
+    # Document defaults & styles (matches reference template)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _configure_document_defaults(doc: Document) -> None:
+        """Set w:docDefaults so every paragraph/run inherits brand fonts,
+        color, size, and spacing — matching the reference template exactly."""
+        styles_elem = doc.styles.element
+        doc_defaults = styles_elem.find(qn('w:docDefaults'))
+        if doc_defaults is None:
+            doc_defaults = OxmlElement('w:docDefaults')
+            styles_elem.insert(0, doc_defaults)
+
+        # --- Run defaults ---
+        rPrDefault = doc_defaults.find(qn('w:rPrDefault'))
+        if rPrDefault is None:
+            rPrDefault = OxmlElement('w:rPrDefault')
+            doc_defaults.append(rPrDefault)
+        rPr = rPrDefault.find(qn('w:rPr'))
+        if rPr is None:
+            rPr = OxmlElement('w:rPr')
+            rPrDefault.append(rPr)
+
+        # Font: Akkurat LL (all slots)
+        for existing in rPr.findall(qn('w:rFonts')):
+            rPr.remove(existing)
+        rFonts = OxmlElement('w:rFonts')
+        rFonts.set(qn('w:ascii'), FONT_FAMILIES['body'])
+        rFonts.set(qn('w:hAnsi'), FONT_FAMILIES['body'])
+        rFonts.set(qn('w:eastAsia'), FONT_FAMILIES['body'])
+        rFonts.set(qn('w:cs'), FONT_FAMILIES['body'])
+        rPr.append(rFonts)
+
+        # Size: 22 half-points = 11pt
+        for existing in rPr.findall(qn('w:sz')):
+            rPr.remove(existing)
+        sz = OxmlElement('w:sz')
+        sz.set(qn('w:val'), '22')
+        rPr.append(sz)
+        for existing in rPr.findall(qn('w:szCs')):
+            rPr.remove(existing)
+        szCs = OxmlElement('w:szCs')
+        szCs.set(qn('w:val'), '22')
+        rPr.append(szCs)
+
+        # Color: #2F2F2F
+        for existing in rPr.findall(qn('w:color')):
+            rPr.remove(existing)
+        color = OxmlElement('w:color')
+        color.set(qn('w:val'), BRAND_COLORS['ash'])
+        rPr.append(color)
+
+        # --- Paragraph defaults ---
+        pPrDefault = doc_defaults.find(qn('w:pPrDefault'))
+        if pPrDefault is None:
+            pPrDefault = OxmlElement('w:pPrDefault')
+            doc_defaults.append(pPrDefault)
+        pPr = pPrDefault.find(qn('w:pPr'))
+        if pPr is None:
+            pPr = OxmlElement('w:pPr')
+            pPrDefault.append(pPr)
+
+        # Spacing: after=200 line=324 lineRule=auto
+        for existing in pPr.findall(qn('w:spacing')):
+            pPr.remove(existing)
+        sp = OxmlElement('w:spacing')
+        sp.set(qn('w:after'), '200')
+        sp.set(qn('w:line'), '324')
+        sp.set(qn('w:lineRule'), 'auto')
+        pPr.append(sp)
+
+    @staticmethod
+    def _configure_styles(doc: Document) -> None:
+        """Configure Heading 1/2/3 styles to match the reference template."""
+
+        def _set_style_font(style, font_name, size_hp, color_val, bold=None):
+            """Configure a style's font via XML for full control."""
+            se = style.element
+            rPr = se.find(qn('w:rPr'))
+            if rPr is None:
+                rPr = OxmlElement('w:rPr')
+                se.append(rPr)
+
+            # Font (eastAsia slot for heading family — matches reference)
+            for existing in rPr.findall(qn('w:rFonts')):
+                rPr.remove(existing)
+            rFonts = OxmlElement('w:rFonts')
+            rFonts.set(qn('w:eastAsia'), font_name)
+            rPr.append(rFonts)
+
+            # Size
+            for existing in rPr.findall(qn('w:sz')):
+                rPr.remove(existing)
+            sz = OxmlElement('w:sz')
+            sz.set(qn('w:val'), str(size_hp))
+            rPr.append(sz)
+
+            # Color (remove theme-based color, set explicit)
+            for existing in rPr.findall(qn('w:color')):
+                rPr.remove(existing)
+            c = OxmlElement('w:color')
+            c.set(qn('w:val'), color_val)
+            rPr.append(c)
+
+            # Bold
+            if bold is not None:
+                for existing in rPr.findall(qn('w:b')):
+                    rPr.remove(existing)
+                if bold:
+                    b = OxmlElement('w:b')
+                    rPr.append(b)
+
+        def _set_style_spacing(style, before=None, after=None):
+            """Configure a style's paragraph spacing."""
+            se = style.element
+            pPr = se.find(qn('w:pPr'))
+            if pPr is None:
+                pPr = OxmlElement('w:pPr')
+                se.append(pPr)
+            for existing in pPr.findall(qn('w:spacing')):
+                pPr.remove(existing)
+            sp = OxmlElement('w:spacing')
+            if before is not None:
+                sp.set(qn('w:before'), str(before))
+            if after is not None:
+                sp.set(qn('w:after'), str(after))
+            pPr.append(sp)
+
+        green = BRAND_COLORS['sharpGreen']
+        heading_font = FONT_FAMILIES['heading']
+
+        # Heading 1: 16pt, green, Amsi Pro Narw Black, before=400
+        h1 = doc.styles['Heading 1']
+        _set_style_font(h1, heading_font, 32, green)
+        _set_style_spacing(h1, before=400)
+
+        # Heading 2: 14pt, green, bold, before=300, after=150
+        h2 = doc.styles['Heading 2']
+        _set_style_font(h2, heading_font, 28, green, bold=True)
+        _set_style_spacing(h2, before=300, after=150)
+
+        # Heading 3: 12pt, green, bold, Amsi Pro Narw Black (all slots), before=200, after=100
+        h3 = doc.styles['Heading 3']
+        _set_style_font(h3, heading_font, 24, green, bold=True)
+        # Heading 3 in reference has all font slots set
+        se = h3.element
+        rPr = se.find(qn('w:rPr'))
+        rFonts = rPr.find(qn('w:rFonts'))
+        rFonts.set(qn('w:ascii'), heading_font)
+        rFonts.set(qn('w:hAnsi'), heading_font)
+        _set_style_spacing(h3, before=200, after=100)
+
+        # Create bullet numbering definition for ListParagraph
+        # (matches reference: Symbol font bullet, left=720, hanging=360)
+        numbering_part = doc.part.numbering_part
+        numbering_elem = numbering_part.element
+
+        # abstractNum definition
+        abstract_num = OxmlElement('w:abstractNum')
+        abstract_num.set(qn('w:abstractNumId'), '100')
+        lvl = OxmlElement('w:lvl')
+        lvl.set(qn('w:ilvl'), '0')
+        start = OxmlElement('w:start')
+        start.set(qn('w:val'), '1')
+        lvl.append(start)
+        num_fmt = OxmlElement('w:numFmt')
+        num_fmt.set(qn('w:val'), 'bullet')
+        lvl.append(num_fmt)
+        lvl_text = OxmlElement('w:lvlText')
+        lvl_text.set(qn('w:val'), '\uf0b7')  # Symbol bullet
+        lvl.append(lvl_text)
+        lvl_jc = OxmlElement('w:lvlJc')
+        lvl_jc.set(qn('w:val'), 'left')
+        lvl.append(lvl_jc)
+        lvl_pPr = OxmlElement('w:pPr')
+        lvl_ind = OxmlElement('w:ind')
+        lvl_ind.set(qn('w:left'), '720')
+        lvl_ind.set(qn('w:hanging'), '360')
+        lvl_pPr.append(lvl_ind)
+        lvl.append(lvl_pPr)
+        lvl_rPr = OxmlElement('w:rPr')
+        lvl_rFonts = OxmlElement('w:rFonts')
+        lvl_rFonts.set(qn('w:ascii'), 'Symbol')
+        lvl_rFonts.set(qn('w:hAnsi'), 'Symbol')
+        lvl_rPr.append(lvl_rFonts)
+        lvl.append(lvl_rPr)
+        abstract_num.append(lvl)
+        numbering_elem.append(abstract_num)
+
+        # num instance pointing to abstractNum
+        num = OxmlElement('w:num')
+        num.set(qn('w:numId'), '100')
+        abstract_ref = OxmlElement('w:abstractNumId')
+        abstract_ref.set(qn('w:val'), '100')
+        num.append(abstract_ref)
+        numbering_elem.append(num)
 
     # ------------------------------------------------------------------
     # Section 1: Title page
@@ -1071,22 +1273,14 @@ class DebriefDocxGenerator:
             section = by_id[section_id]
             bookmark_name = f'section-{section_id}'
 
-            # H1 heading with bookmark
-            para = doc.add_paragraph()
-            para.paragraph_format.keep_with_next = True
+            # H1 heading with bookmark — uses Heading1 style (no explicit run formatting)
+            para = doc.add_paragraph(style='Heading 1')
+            run = para.add_run(section.get('title', section_id))
+            # Style handles font/size/color; only set spacing override
             _set_paragraph_spacing(para, before=400, after=300)
-            _add_run(para, section.get('title', section_id), FONT_FAMILIES['heading'],
-                     Pt(16), BRAND_COLORS['sharpGreen'], bold=True)
 
             self._bookmark_counter += 1
             _make_bookmark(para, self._bookmark_counter, bookmark_name)
-
-            # Set heading style via XML so it appears in navigation
-            p_elem = para._element
-            pPr = p_elem.get_or_add_pPr()
-            pStyle = OxmlElement('w:pStyle')
-            pStyle.set(qn('w:val'), 'Heading1')
-            pPr.insert(0, pStyle)
 
             # Convert markdown content
             content_text = section.get('content', '')
@@ -1101,21 +1295,11 @@ class DebriefDocxGenerator:
         for block in blocks:
             if isinstance(block, MdHeading):
                 level = block.level
-                size = Pt(14) if level <= 2 else Pt(12)
-                style_name = 'Heading2' if level <= 2 else 'Heading3'
+                style_name = 'Heading 2' if level <= 2 else 'Heading 3'
 
-                para = doc.add_paragraph()
-                para.paragraph_format.keep_with_next = True
-                _set_paragraph_spacing(para, before=300, after=150)
-                # Apply heading style via XML
-                p_elem = para._element
-                pPr = p_elem.get_or_add_pPr()
-                pStyle = OxmlElement('w:pStyle')
-                pStyle.set(qn('w:val'), style_name)
-                pPr.insert(0, pStyle)
-
-                _add_run(para, _strip_inline_md(block.text), FONT_FAMILIES['heading'],
-                         size, BRAND_COLORS['sharpGreen'], bold=True)
+                # Use style — no explicit font/size/color on runs
+                para = doc.add_paragraph(style=style_name)
+                para.add_run(_strip_inline_md(block.text))
 
             elif isinstance(block, MdList):
                 for idx, item in enumerate(block.items):
@@ -1132,23 +1316,33 @@ class DebriefDocxGenerator:
                     else:
                         list_text = item_text
 
-                    para = doc.add_paragraph()
-
                     if block.ordered:
-                        # Ordered items: regular paragraphs with number prefix,
-                        # no indent, after=200 + line=324 (matches original Goal/Data)
-                        _set_paragraph_spacing(para, after=200, line=324, line_rule='auto')
+                        # Ordered items: regular paragraphs with number prefix
+                        # (inherits after=200 + line=324 from docDefaults)
+                        para = doc.add_paragraph()
                     else:
-                        # Bullet list via numbering
-                        para.style = doc.styles['List Bullet']
-                        _set_paragraph_spacing(para, after=120, line=324, line_rule='auto')
+                        # Bullet list via List Paragraph style (matches reference)
+                        para = doc.add_paragraph(style='List Paragraph')
+                        _set_paragraph_spacing(para, after=120)
+
+                        # Connect to bullet numbering definition (numId=100)
+                        p_elem = para._element
+                        pPr = p_elem.get_or_add_pPr()
+                        numPr = OxmlElement('w:numPr')
+                        ilvl = OxmlElement('w:ilvl')
+                        ilvl.set(qn('w:val'), str(indent_level))
+                        numPr.append(ilvl)
+                        numId = OxmlElement('w:numId')
+                        numId.set(qn('w:val'), '100')
+                        numPr.append(numId)
+                        pPr.append(numPr)
+
                         # Apply additional indent for nested sub-bullets
                         if indent_level > 0:
-                            p_elem = para._element
-                            pPr = p_elem.get_or_add_pPr()
                             ind = OxmlElement('w:ind')
-                            indent_twips = str(360 + indent_level * 360)
+                            indent_twips = str(720 + indent_level * 360)
                             ind.set(qn('w:left'), indent_twips)
+                            ind.set(qn('w:hanging'), '360')
                             pPr.append(ind)
 
                     self._add_inline_runs(para, list_text)
@@ -1162,17 +1356,23 @@ class DebriefDocxGenerator:
             elif isinstance(block, MdParagraph):
                 if not block.text.strip():
                     continue
+                # Normal paragraph — inherits after=200, line=324 from docDefaults
                 para = doc.add_paragraph()
-                _set_paragraph_spacing(para, after=200, line=324, line_rule='auto')
-
                 self._add_inline_runs(para, block.text)
 
     def _add_inline_runs(self, paragraph, text: str) -> None:
-        """Parse inline formatting and add runs to *paragraph*."""
+        """Parse inline formatting and add runs to *paragraph*.
+
+        Runs inherit font/size/color from document defaults and styles.
+        Only bold/italic are set explicitly when needed.
+        """
         runs = _parse_inline_formatting(text)
         for r in runs:
-            _add_run(paragraph, r.text, FONT_FAMILIES['body'], Pt(11),
-                     BRAND_COLORS['ash'], bold=r.bold, italic=r.italic)
+            run = paragraph.add_run(r.text)
+            if r.bold:
+                run.bold = True
+            if r.italic:
+                run.italic = True
 
     def _add_image_block(self, doc: Document, url: str, alt: str) -> None:
         """Embed a base64 data-URL image or add a placeholder."""
