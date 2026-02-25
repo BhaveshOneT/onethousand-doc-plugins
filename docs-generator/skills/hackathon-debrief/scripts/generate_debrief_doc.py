@@ -1083,10 +1083,10 @@ class DebriefDocxGenerator:
         green = BRAND_COLORS['sharpGreen']
         heading_font = FONT_FAMILIES['heading']
 
-        # Heading 1: 16pt green, NOT bold for Latin, bCs only.
+        # Heading 1: 16pt green, bold for all scripts.
         # eastAsia/cs = Amsi Pro Narw Black; ascii/hAnsi inherit Akkurat LL.
         h1 = doc.styles['Heading 1']
-        _set_style_font(h1, heading_font, 32, green, bold=False, bold_cs=True)
+        _set_style_font(h1, heading_font, 32, green, bold=True, bold_cs=True)
         _set_style_spacing(h1, before=400)
 
         # Heading 2: 14pt green, bold + bCs.

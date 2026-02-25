@@ -401,6 +401,9 @@ def make_cover(prs, client_name, location, date, use_case_title, day=1, verbose=
             r2.font.size = Pt(32)
             r2.font.bold = False
 
+            # Enable autofit so long titles shrink instead of overflowing
+            _enable_autofit(tf)
+
     # Client logo placeholder at bottom-right
     image_placeholder(slide, 9.60, 6.55, 4.18, 0.84, "Client logo")
 
