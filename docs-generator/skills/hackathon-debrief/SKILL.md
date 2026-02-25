@@ -12,22 +12,6 @@ description: >
   Supports English and German. Produces DOCX output with green branded
   title page, One Thousand logo, professional typography, and structured sections.
 license: Proprietary
-triggers:
-  - "hackathon debrief"
-  - "debrief document"
-  - "generate debrief"
-  - "hackathon report"
-  - "create debrief"
-  - "write debrief"
-  - "debrief for this"
-  - "hackathon summary"
-  - "hackathon writeup"
-  - "post-hackathon document"
-  - "debrief doc"
-  - "debrief docx"
-  - "hackathon document"
-  - "write a debrief"
-  - "make a debrief"
 ---
 
 # Hackathon Debrief Generator Skill

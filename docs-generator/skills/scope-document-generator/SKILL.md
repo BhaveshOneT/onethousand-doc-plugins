@@ -12,22 +12,6 @@ description: >
   not asked separately.
   Supports English and German.
 license: Proprietary
-triggers:
-  - "scope document"
-  - "scope doc"
-  - "project scope"
-  - "PoC scope"
-  - "create scope"
-  - "generate scope"
-  - "scope for this"
-  - "formal document"
-  - "client deliverable"
-  - "project definition"
-  - "convert hackathon"
-  - "hackathon to scope"
-  - "make a scope"
-  - "write a scope"
-  - "scope document for this input"
 ---
 
 # Scope Document Generator Skill

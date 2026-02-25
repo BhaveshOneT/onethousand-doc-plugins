@@ -744,6 +744,12 @@ def process_template(
             working_dir = os.path.join(work_temp, "docx_work")
             shutil.copytree(template_dir, working_dir)
 
+            # Restore [Content_Types].xml if renamed for zip compatibility
+            safe_ct = os.path.join(working_dir, "_Content_Types_.xml")
+            real_ct = os.path.join(working_dir, "[Content_Types].xml")
+            if os.path.exists(safe_ct) and not os.path.exists(real_ct):
+                os.rename(safe_ct, real_ct)
+
             # Read document.xml
             doc_xml_path = os.path.join(working_dir, "word", "document.xml")
             if not os.path.exists(doc_xml_path):

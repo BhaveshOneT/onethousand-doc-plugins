@@ -13,19 +13,6 @@ description: >
   project complexity. Supports English and German. Includes confidence
   scoring and smart Confluence/Close CRM lookup for missing metadata.
 license: Proprietary
-triggers:
-  - "design plan"
-  - "sprint design"
-  - "project design plan"
-  - "sprint plan"
-  - "create design plan"
-  - "generate sprints"
-  - "project timeline"
-  - "sprint breakdown"
-  - "design plan for this"
-  - "sprint design for this"
-  - "create sprints"
-  - "timeline and sprints"
 ---
 
 # Sprint Design (Project Design Plan) Skill
