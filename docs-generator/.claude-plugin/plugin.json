@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Professional document generation plugin with One Thousand branding. Generates scope documents, hackathon debrief documents (DOCX), hackathon presentations (PPTX), sprint design plans (Confluence), proposals, and client-facing deliverables from hackathon summaries and project briefs. Includes confidence-scored content, iterative quality review, and anti-hallucination verification. Supports English and German.",
+  "description": "Professional document generation plugin with One Thousand branding. Generates scope documents, hackathon debrief documents (DOCX), hackathon presentations (PPTX), kick-off presentations (PPTX), sprint design plans (Confluence), proposals, and client-facing deliverables from hackathon summaries and project briefs. Includes confidence-scored content, iterative quality review, and anti-hallucination verification. Supports English and German.",
   "author": {
     "name": "One Thousand GmbH"
   },
@@ -44,6 +44,12 @@
     "debrief-document",
     "sprint-design",
     "confluence",
-    "design-plan"
+    "design-plan",
+    "kick-off",
+    "kick-off-presentation",
+    "project-kick-off",
+    "projekt-kick-off",
+    "rollout-kick-off",
+    "kickoff-slides"
   ]
 }

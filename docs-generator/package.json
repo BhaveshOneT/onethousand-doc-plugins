@@ -1,7 +1,7 @@
 {
   "name": "docs-generator",
-  "version": "2.1.0",
-  "description": "Claude Code plugin for professional document generation with One Thousand branding. Scope documents, hackathon debrief documents (DOCX), hackathon presentations (PPTX), sprint design plans (Confluence), architecture diagrams (Graphviz), confidence-scored content, and anti-hallucination verification. EN/DE support.",
+  "version": "2.2.0",
+  "description": "Claude Code plugin for professional document generation with One Thousand branding. Scope documents, hackathon debrief documents (DOCX), hackathon presentations (PPTX), kick-off presentations (PPTX), sprint design plans (Confluence), architecture diagrams (Graphviz), confidence-scored content, and anti-hallucination verification. EN/DE support.",
   "type": "module",
   "keywords": [
     "claude-code",
@@ -24,7 +24,13 @@
     "slide-deck",
     "sprint-design",
     "confluence",
-    "design-plan"
+    "design-plan",
+    "kick-off",
+    "kick-off-presentation",
+    "project-kick-off",
+    "projekt-kick-off",
+    "rollout-kick-off",
+    "kickoff-slides"
   ],
   "author": "One Thousand GmbH",
   "license": "UNLICENSED",
